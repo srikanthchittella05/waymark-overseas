@@ -20,10 +20,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-    <head>
-      <script id="waymark-arrival" dangerouslySetInnerHTML={{ __html: ARRIVAL_BOOTSTRAP }} />
-
-    </head>
+      <head>
+        <script id="waymark-arrival" dangerouslySetInnerHTML={{ __html: ARRIVAL_BOOTSTRAP }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <MotionProvider>
           <GsapProvider>

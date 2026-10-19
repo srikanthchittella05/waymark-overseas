@@ -89,6 +89,27 @@ src/
 Each screen owns its stylesheet on purpose, so two screens can never collide on
 `globals.css`.
 
+## Branches
+
+| Branch | Purpose |
+| --- | --- |
+| `main` | **Production.** The deployed branch. Protect it — no direct pushes. |
+| `develop` | Integration. Every change lands here first. |
+| `feature/*` | One branch per piece of work, branched from `develop`. |
+
+The working loop:
+
+```bash
+git switch develop
+git switch -c feature/whatever-it-is   # branch from develop
+# ... work, commit, push ...
+git push -u origin feature/whatever-it-is
+# open a pull request → develop
+```
+
+Release to production is `develop` → `main` by pull request, so `main` only ever
+receives reviewed changes.
+
 ## A note on motion
 
 Standard viewing has the full motion experience. `prefers-reduced-motion` is the only

@@ -459,11 +459,6 @@ export default function JourneySculpture({ paused, onReady, motion }: JourneyScu
   const handleReady = useCallback(() => {
     setStatus("ready");
     onReady?.();
-    // Notify the arrival sequence that the WebGL sculpture is ready to play.
-    // useArrivalSequence listens for this event on the sculpture's parent.
-    container.current?.dispatchEvent(
-      new CustomEvent("journey-sculpture-ready", { bubbles: true }),
-    );
   }, [onReady]);
   const renderable = visibility.inView && documentVisible && status !== "lost";
 

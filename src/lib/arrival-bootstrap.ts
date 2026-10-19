@@ -2,8 +2,6 @@
 // The no-JS page remains completely visible. No profile or progress is touched.
 export const ARRIVAL_BOOTSTRAP = String.raw`
 (() => {
-  // Arrival cinematic disabled for the basic build — page shows immediately.
-  return;
   const root = document.documentElement;
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (location.pathname !== '/' || location.hash || preference.matches ||
