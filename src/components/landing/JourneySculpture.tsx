@@ -1,6 +1,5 @@
 "use client";
 
-import "@/lib/three-console-filter";
 import {
   Component,
   memo,
