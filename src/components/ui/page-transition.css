@@ -1,0 +1,24 @@
+.waymark-page-surface { display: flow-root; min-block-size: 100svh; background: var(--paper, #e8f2f5); }
+
+/* Capture a readable arrival, not the hidden first frame of a second GSAP
+   heading reveal. Direct loads still get their full route-local choreography. */
+:root:active-view-transition .waymark-page-surface :is(.path-hero .pa-line > span, .today-head .today-mask-inner, .steps-head .steps-mask-inner, .route-hero .rt-line > span, .hero-title .line-inner, .rt-ruler-track) { transform: none !important; }
+:root:active-view-transition .waymark-page-surface :is(.pa-preview-head, .route-edges) { clip-path: none !important; }
+
+/* React suppresses an unaffected root by giving the overlay a zero-size WAAPI
+   effect. Keep its forest field viewport-sized while named page irises travel. */
+::view-transition { pointer-events: none; width: 100vw !important; height: 100dvh !important; }
+:root.waymark-page-travelling::view-transition { background: var(--color-forest, #09241c); }
+::view-transition-group(site-header) { animation: none; z-index: 100; }
+::view-transition-old(site-header) { display: none; }
+::view-transition-new(site-header) { animation: none; }
+:root.waymark-page-travelling::view-transition-group(root) { animation: none; }
+:root.waymark-page-travelling::view-transition-old(root),
+:root.waymark-page-travelling::view-transition-new(root) { display: none; }
+::view-transition-group(.waymark-page) { animation: none; }
+::view-transition-old(.waymark-page), ::view-transition-new(.waymark-page) { animation: none; mix-blend-mode: normal; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation-duration: 0s !important; animation-delay: 0s !important; }
+  ::view-transition-old(.waymark-page) { display: none; }
+  ::view-transition-new(.waymark-page) { clip-path: none !important; transform: none; }
+}

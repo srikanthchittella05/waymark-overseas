@@ -1,0 +1,743 @@
+/* =============================================================================
+   /steps — the whole plan as a checklist.
+
+   Same vocabulary as globals.css: only the aliases --dur-instant / --dur /
+   --dur-slow and --ease-brand / --ease-out appear below. Reveals are masked.
+   Hover never restyles a row, a filter or a link — it moves something inside.
+   Status is always three signals at once: a shape, a word and a colour.
+   ========================================================================== */
+
+.steps {
+  --rule: color-mix(in srgb, var(--color-forest) 15%, transparent);
+  --rule-strong: color-mix(in srgb, var(--color-forest) 28%, transparent);
+  --muted: color-mix(in srgb, var(--color-ink) 66%, transparent);
+  padding-bottom: clamp(2rem, 5vw, 4rem);
+}
+
+/* ------------------------------- head ---------------------------------- */
+
+.steps-head {
+  padding: calc(var(--header-h) + clamp(1.5rem, 4vw, 3.5rem)) var(--pad-x) 0;
+}
+
+/*
+ * The h1 says what the page is. It is deliberately smaller than the number below
+ * it and smaller than the lead row, so the checklist leads — not the header.
+ */
+.steps-title {
+  font-size: clamp(2.2rem, 5.6vw, 4.25rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 0.94;
+}
+.steps-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.09em;
+}
+.steps-mask-inner {
+  display: block;
+  will-change: transform;
+}
+
+/* The only supporting line in the header. "Change target" lives here, quiet. */
+.steps-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  margin-top: clamp(0.9rem, 1.8vw, 1.35rem);
+  padding-top: clamp(0.85rem, 1.6vw, 1.25rem);
+  border-top: 1px solid var(--rule);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.steps-context .steps-target {
+  color: var(--color-forest);
+}
+
+/* ------------------------- one number, one row -------------------------- */
+
+/* The single dominant figure: what is still open, which is what this page is for. */
+.steps-figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.8rem;
+  margin-top: clamp(1.25rem, 2.4vw, 1.85rem);
+}
+.steps-figure-number {
+  font-size: clamp(2.9rem, 7.5vw, 5.75rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.86;
+  font-variant-numeric: tabular-nums;
+}
+.steps-figure-unit {
+  font-size: clamp(1rem, 1.7vw, 1.4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* Everything else, demoted to one inline row of small text. */
+.steps-micro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.65rem;
+  margin-top: clamp(0.6rem, 1.2vw, 0.9rem);
+  padding-bottom: clamp(1.1rem, 2.2vw, 1.6rem);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.steps-micro strong {
+  font-weight: 500;
+  color: var(--color-forest);
+}
+.steps-micro [data-signal] strong,
+.steps-micro [data-signal] {
+  color: var(--color-signal);
+}
+
+/*
+ * Once these wrap, a separator can strand itself at the end of a line. Below
+ * the filter breakpoint the stats are short enough to read as separate items
+ * on their own, so the separators come out and the gap carries the grouping.
+ */
+@media (max-width: 520px) {
+  .steps-micro {
+    gap: 0.45rem 1.1rem;
+  }
+  .steps-micro [aria-hidden="true"] {
+    display: none;
+  }
+}
+
+/* ------------------------------- filter -------------------------------- */
+
+/*
+ * One segmented object. Four segments share a single box and are divided by
+ * hairlines, so the control reads as one instrument rather than four buttons.
+ */
+.steps-filterbar {
+  margin: clamp(1.5rem, 3vw, 2.25rem) var(--pad-x) 0;
+}
+.steps-filters {
+  display: inline-flex;
+  max-width: 100%;
+  /* The pill only exists while the four segments genuinely share one row. */
+  flex-wrap: nowrap;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  /*
+   * The fills have to stay clipped to the pill. The focus ring must not be:
+   * `overflow: hidden` was eating the top, bottom and outer edges of the ring,
+   * leaving a segment with three quarters of an indicator. `clip` plus a clip
+   * margin draws the same shape for the fills and lets the ring paint outside.
+   * The narrow breakpoint below changes the radius but keeps both, so the ring
+   * still escapes a two-row control too.
+   */
+  overflow: clip;
+  overflow-clip-margin: 10px;
+}
+.steps-filter {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+/*
+ * The segments sit flush, so the ring crosses a neighbour. Where that neighbour
+ * is the dark active segment, a forest-green ring on forest green is 1:1 — the
+ * light halo below extends past the ring so it always has a contrasting surface
+ * on both sides, and the raised z-index keeps the neighbour from painting over
+ * it. Over the page the halo is invisible, so the ring is the one you see.
+ */
+.steps-filter:focus-visible {
+  z-index: 1;
+  box-shadow: 0 0 0 7px var(--color-halfwhite);
+}
+/* Hairline separators, not six independent rings. */
+.steps-filter + .steps-filter {
+  border-inline-start: 1px solid var(--rule);
+}
+/* Selected is a state, not a hover: the fill changes, hover never does. */
+.steps-filter[data-active="true"] {
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+}
+.steps-filter[data-active="true"] .steps-filter-count {
+  background: color-mix(in srgb, var(--color-porcelain) 22%, transparent);
+  color: var(--color-porcelain);
+}
+/* A missed date is the one thing allowed to shout, and it shouts here too. */
+.steps-filter[data-kind="risk"] .steps-filter-count {
+  color: var(--color-signal);
+}
+.steps-filter[data-active="true"][data-kind="risk"] .steps-filter-count {
+  color: var(--color-signal);
+}
+.steps-filter-count {
+  padding: 0.08rem 0.38rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.steps-empty {
+  max-width: 48ch;
+  margin: clamp(2rem, 4vw, 3rem) var(--pad-x);
+  font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+  line-height: 1.45;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* ------------------------------- phases -------------------------------- */
+
+.steps-phase {
+  margin: clamp(2.25rem, 4.5vw, 3.5rem) var(--pad-x) 0;
+}
+.steps-phase-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+  padding-bottom: clamp(0.75rem, 1.4vw, 1rem);
+  border-bottom: 1px solid var(--rule-strong);
+}
+.steps-phase-title {
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.steps-phase-count {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.steps-list {
+  border-bottom: 1px solid var(--rule);
+}
+
+/* --------------------------------- row --------------------------------- */
+
+.steps-row {
+  position: relative;
+  padding-block: clamp(1rem, 2vw, 1.6rem);
+  border-bottom: 1px solid var(--rule);
+}
+.steps-list li:last-child {
+  border-bottom: 0;
+}
+/* Hover draws a rule inside the row. Nothing about the row itself restyles. */
+.steps-row::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--color-forest);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.steps-row:hover::after,
+.steps-row:focus-within::after {
+  transform: scaleX(1);
+}
+/* A missed date is the one thing allowed to shout. */
+.steps-row[data-status="risk"] {
+  padding-left: clamp(0.85rem, 1.6vw, 1.25rem);
+  border-left: 2px solid var(--color-signal);
+}
+/* The first actionable item leads. Not the filter row, not the phase heading:
+   the row itself is pulled forward with a rule, a marker and a larger title. */
+.steps-row[data-lead] {
+  padding-left: clamp(0.85rem, 1.6vw, 1.25rem);
+  border-left: 2px solid var(--color-forest);
+}
+.steps-row-lead {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.185em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--color-forest);
+}
+.steps-row[data-lead] .steps-row-title {
+  font-size: clamp(1.35rem, 2.6vw, 2.1rem);
+  letter-spacing: -0.04em;
+}
+.steps-row[data-lead] .steps-row-summary {
+  font-size: 1rem;
+  color: var(--color-ink);
+}
+/* A missed date outranks the lead marker — the risk rule stays in signal. */
+.steps-row[data-lead][data-status="risk"] {
+  border-left-color: var(--color-signal);
+}
+
+.steps-row[data-done="true"] .steps-row-title {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--rule-strong);
+}
+
+.steps-row-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem 0.9rem;
+  align-items: start;
+}
+.steps-row-title {
+  font-size: clamp(1.15rem, 2.1vw, 1.75rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  text-wrap: pretty;
+}
+.steps-row-title label {
+  cursor: pointer;
+}
+.steps-row-state {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.steps-mark-when {
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--rule-strong);
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+.steps-row[data-status="risk"] .steps-mark-when {
+  color: var(--color-signal);
+  font-weight: 500;
+}
+.steps-row[data-status="now"] .steps-mark-word {
+  color: var(--color-forest);
+}
+
+/* Status shape — the non-colour half of every status signal. */
+.steps-mark {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  color: var(--color-forest);
+}
+.steps-mark[data-status="now"] {
+  border-radius: 50%;
+  background: currentColor;
+}
+.steps-mark[data-status="next"] {
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.steps-mark[data-status="later"] {
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.steps-mark[data-status="risk"] {
+  color: var(--color-signal);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  background: currentColor;
+}
+.steps-mark[data-status="done"] {
+  position: relative;
+  border-radius: 50%;
+  background: var(--color-forest);
+  color: var(--color-acid);
+}
+.steps-mark[data-status="done"]::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  font-size: 0.5rem;
+  line-height: 1;
+}
+
+/* Checkbox: a real input, drawn. Focus does the talking; hover does not. */
+.steps-box {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: 0.18em;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease-brand),
+    border-color var(--dur) var(--ease-brand);
+}
+.steps-box:checked {
+  background: var(--color-forest);
+  border-color: var(--color-forest);
+}
+.steps-box:checked::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.85rem;
+  margin-top: -0.16rem;
+  border: 2px solid var(--color-acid);
+  border-block-start: 0;
+  border-inline-start: 0;
+  transform: rotate(42deg);
+}
+
+.steps-row-summary {
+  max-width: 62ch;
+  margin-top: 0.7rem;
+  margin-left: calc(1.3rem + 0.9rem);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+/* -------------------------------- meta --------------------------------- */
+
+.steps-row-meta {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: clamp(0.85rem, 1.6vw, 1.15rem);
+  margin-left: calc(1.3rem + 0.9rem);
+}
+.steps-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.6rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.steps-meta-key {
+  flex: none;
+  min-width: 4.25rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.steps-meta-value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+}
+.steps-flag {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.steps-flag-hard {
+  background: color-mix(in srgb, var(--color-signal) 14%, transparent);
+  color: var(--color-signal);
+}
+.steps-confidence {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* Confidence is a trust signal, so it is never hidden — and never colour-only. */
+.steps-confidence-verified {
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+}
+.steps-confidence-typical {
+  border: 1px solid var(--rule-strong);
+  color: var(--color-forest);
+}
+.steps-confidence-estimate {
+  border: 1px dashed var(--rule-strong);
+  color: var(--muted);
+}
+.steps-confidence-note {
+  max-width: 62ch;
+  margin-left: calc(4.25rem + 0.6rem);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.steps-waiting {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  max-width: 62ch;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--color-forest) 5%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.steps-waiting .steps-mark {
+  margin-top: 0.3em;
+}
+.steps-waiting-key {
+  font-weight: 500;
+}
+
+/* ------------------------------- tasks --------------------------------- */
+
+.steps-tasks {
+  margin-top: 0.85rem;
+  margin-left: calc(1.3rem + 0.9rem);
+}
+.steps-tasks-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.2rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+  /* Self-drawing rule under the summary. */
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0 1px;
+  transition: background-size var(--dur) var(--ease-brand);
+}
+.steps-tasks-summary::-webkit-details-marker {
+  display: none;
+}
+.steps-tasks-summary:hover,
+.steps-tasks-summary:focus-visible {
+  background-size: 100% 1px;
+}
+.steps-tasks-chevron {
+  display: inline-block;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.steps-tasks[open] .steps-tasks-chevron {
+  transform: rotate(90deg);
+}
+.steps-task-list {
+  max-width: 68ch;
+  margin-top: 0.7rem;
+  counter-reset: steps-task;
+}
+.steps-task-list li {
+  position: relative;
+  padding-block: 0.5rem;
+  padding-left: 1.6rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.steps-task-list li::before {
+  counter-increment: steps-task;
+  content: counter(steps-task);
+  position: absolute;
+  top: 0.78rem;
+  left: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* -------------------------------- band --------------------------------- */
+
+.steps-band {
+  margin-top: clamp(2.5rem, 6vw, 5rem);
+  padding: clamp(2rem, 4.5vw, 4rem) var(--pad-x);
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+  --rule: color-mix(in srgb, var(--color-porcelain) 18%, transparent);
+  --rule-strong: color-mix(in srgb, var(--color-porcelain) 30%, transparent);
+  --muted: color-mix(in srgb, var(--color-porcelain) 68%, transparent);
+}
+/* A forest-green ring would vanish on this band. */
+.steps-band :focus-visible {
+  outline-color: var(--color-acid);
+}
+.steps-band-title {
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+.steps-band-copy {
+  max-width: 40rem;
+  margin-top: clamp(1rem, 2vw, 1.5rem);
+  font-size: clamp(0.9375rem, 1.15vw, 1.0625rem);
+  line-height: 1.6;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.steps-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+/* --------------------------- links and pills --------------------------- */
+
+/* Self-drawing underline: nothing about the anchor itself ever animates. */
+.steps-underline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding-bottom: 0.2rem;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0 1px;
+  transition: background-size var(--dur) var(--ease-brand);
+}
+.steps-underline:hover,
+.steps-underline:focus-visible {
+  background-size: 100% 1px;
+}
+.steps-underline svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: none;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.steps-underline:hover svg,
+.steps-underline:focus-visible svg {
+  transform: translate(2px, -2px);
+}
+.steps-target {
+  font-size: 0.8125rem;
+}
+
+/* Keep the native disclosure and the real checkbox. Only their non-focusable
+   content moves; no clipping container is added around a focus indicator. */
+@keyframes steps-tasks-open {
+  from { clip-path: inset(0 0 100% 0); transform: translateY(-6px); }
+  to { clip-path: inset(0); transform: translateY(0); }
+}
+
+@keyframes steps-count-update {
+  from { transform: scale(0.88); }
+  to { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .steps[data-motion="on"] .steps-tasks[open] .steps-task-list {
+    animation: steps-tasks-open var(--dur-instant) var(--ease-brand);
+  }
+  .steps[data-motion="on"] .steps-filter[data-active="true"] .steps-filter-count,
+  .steps[data-motion="on"] .steps-row[data-done="true"] .steps-mark {
+    animation: steps-count-update var(--dur-instant) var(--ease-out);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .steps *,
+  .steps *::before,
+  .steps *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ----------------------------- responsive ------------------------------ */
+
+/*
+ * Four segments need ~406px: below a 443px viewport they cannot share one row,
+ * and a wrapped pill is the defect — the 999px arc slices the corners off the
+ * active segment and the left border breaks at the wrap. Neither is acceptable,
+ * and neither a hidden segment nor a horizontal scroller is worth the function
+ * they cost. So the control keeps its one box and its hairlines and changes
+ * shape instead: two columns of two inside a rounded rectangle. Same
+ * instrument, no wrap, no sliced corners, no broken border. The breakpoint is
+ * 520 rather than 443 because a three-digit count on a larger plan widens all
+ * four segments by ~20px; the pill keeps 77px of headroom before it would.
+ */
+@media (max-width: 520px) {
+  .steps-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    border-radius: 1rem;
+  }
+  .steps-filter {
+    justify-content: center;
+    padding-inline: 0.6rem;
+  }
+  /* The row's inline-start rule becomes a column rule, plus one row rule. */
+  .steps-filter:nth-child(2n + 1) {
+    border-inline-start: 0;
+  }
+  .steps-filter:nth-child(2n) {
+    border-inline-start: 1px solid var(--rule);
+  }
+  .steps-filter:nth-child(n + 3) {
+    border-block-start: 1px solid var(--rule);
+  }
+}
+
+@media (max-width: 640px) {
+  .steps-row-summary,
+  .steps-row-meta,
+  .steps-tasks {
+    margin-left: 0;
+  }
+  .steps-meta-key {
+    min-width: 0;
+  }
+  .steps-confidence-note {
+    margin-left: 0;
+  }
+  .steps-row[data-status="risk"] {
+    padding-left: 0.85rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .steps-row-head {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: baseline;
+  }
+  .steps-row-state {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+}

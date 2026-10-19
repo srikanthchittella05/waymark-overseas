@@ -1,0 +1,1019 @@
+/* ============================================================================
+   /path — the whole input surface: four questions, and the consequence.
+
+   Rules this file keeps to, same as /route:
+   - Timing is only ever --dur-instant / --dur / --dur-slow / --ease-brand /
+     --ease-out.
+   - Reveals are masked, never opacity.
+   - Hover moves something inside the control. Selection is a state change on a
+     real native input, so the control's own box is what the browser draws.
+   ========================================================================= */
+
+.path-screen {
+  --pa-gap: clamp(0.85rem, 1.6vw, 1.35rem);
+}
+
+/* ------------------------------- hero ---------------------------------- */
+
+.path-hero {
+  padding: calc(var(--header-h) + clamp(2rem, 7vh, 4.75rem)) var(--pad-x)
+    clamp(1.75rem, 4vh, 3rem);
+}
+
+/*
+ * The h1 says what the page is. It is deliberately smaller than the days count
+ * in the panel below it, so the questions lead rather than the header.
+ */
+.path-hero h1 {
+  font-size: clamp(2.2rem, 5.4vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 0.94;
+}
+.pa-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.09em;
+}
+.pa-line > span {
+  display: block;
+  will-change: transform;
+}
+.pa-line .serif {
+  color: color-mix(in srgb, var(--color-forest) 74%, transparent);
+}
+
+/* The only supporting line in the header. */
+.path-context {
+  margin-top: clamp(0.9rem, 1.8vw, 1.35rem);
+  padding-top: clamp(0.85rem, 1.6vw, 1.25rem);
+  border-top: 1px solid var(--rule);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ------------------------------ sections ------------------------------- */
+
+.path-section {
+  padding: clamp(1.75rem, 4vh, 3rem) var(--pad-x);
+  border-top: 1px solid var(--rule);
+}
+.path-section > h2 {
+  max-width: 30ch;
+  font-size: clamp(1.4rem, 3.2vw, 2.35rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+.path-intro {
+  max-width: 58ch;
+  margin-top: 0.85rem;
+  font-size: 0.9375rem;
+  line-height: 1.62;
+  color: var(--muted);
+}
+.path-intro.is-spaced {
+  margin-top: clamp(1rem, 2vh, 1.5rem);
+}
+
+/* ---------------------------- the four --------------------------------- */
+
+.path-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
+  padding-top: clamp(1.25rem, 2.6vh, 1.85rem);
+}
+.path-questions {
+  display: grid;
+  gap: clamp(1.5rem, 3vh, 2.25rem);
+  align-content: start;
+  min-width: 0;
+}
+
+.pa-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.pa-field legend {
+  display: block;
+  padding: 0 0 0.9rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.185em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--color-forest);
+}
+.pa-help {
+  max-width: 46ch;
+  margin-bottom: 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* Native radio, drawn. Keeping the real input means the focus ring, the
+   keyboard and the form semantics are all the browser's, not ours. */
+.pa-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.2rem 0.7rem;
+  align-content: start;
+  padding: clamp(0.7rem, 1.4vw, 0.95rem);
+  border: 1px solid var(--rule-strong);
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.pa-choice:hover {
+  transform: translateY(-2px);
+}
+.pa-choice input {
+  appearance: none;
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0.2rem 0 0;
+  border: 1.5px solid var(--color-ink-soft);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.pa-choice:hover input {
+  transform: scale(1.15);
+}
+.pa-choice input:checked {
+  border-color: var(--color-forest);
+}
+.pa-choice input:checked::after {
+  content: "";
+  position: absolute;
+  inset: 2.5px;
+  border-radius: 999px;
+  background: var(--color-forest);
+}
+.pa-choice-name {
+  font-size: clamp(0.9375rem, 1.3vw, 1.0625rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.pa-choice:hover .pa-choice-name {
+  transform: translateX(3px);
+}
+.pa-choice-meta {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+.pa-choice[data-checked] {
+  border-color: var(--color-forest);
+  background: var(--color-halfwhite);
+}
+.pa-choice[data-checked] .pa-choice-name {
+  font-weight: 500;
+}
+
+.pa-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem 0.12rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.pa-badge[data-model="rolling"] {
+  border-color: var(--color-forest);
+  color: var(--color-forest);
+}
+.pa-badge[data-model="fixed"] {
+  border-color: var(--color-ink-soft);
+  color: var(--color-ink-soft);
+}
+/* On the pine panel the light-surface pair inverts: forest-on-forest is 1.0:1 and
+   ink-soft only reaches 3.03:1 at 9px. Porcelain and acid both clear 4.5:1. */
+.pa-preview .pa-badge[data-model="rolling"] {
+  border-color: var(--color-porcelain);
+  color: var(--color-porcelain);
+}
+.pa-preview .pa-badge[data-model="fixed"] {
+  border-color: var(--color-acid);
+  color: var(--color-acid);
+}
+.pa-badge[data-tone="signal"] {
+  border-color: var(--color-signal);
+  color: var(--color-signal);
+}
+
+.pa-stage-rail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+.pa-stage-rail .pa-choice {
+  align-content: center;
+  padding: 0.85rem 0.65rem;
+  gap: 0.15rem 0.5rem;
+}
+.pa-stage-rail .pa-choice-name {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+.pa-stage-rail .pa-choice input {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-top: 0.05rem;
+}
+.pa-country-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+}
+/* A row of equal boxes has to be a row of equal bands, or the badges drift.
+   "United Kingdom" sets two name lines where "Canada" sets one, and a card that
+   packs its content from the top hands that one-line difference straight to its
+   meta line. So the grid owns the tracks and each card subgrids into them: both
+   bands are sized by the tallest card in the row and every badge lands on one
+   baseline at every width, with nothing pinned to a height a later width would
+   contradict. align-content no longer applies here — a subgridded axis is placed
+   by the parent grid — and where subgrid is unsupported the declaration is
+   dropped and these cards go back to packing from the top: misaligned, but
+   otherwise exactly as they were. */
+.pa-country-grid > .pa-choice {
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+}
+/* Every placement spelled out rather than left to auto-placement, which has
+   subgridded tracks to fill and no need to be trusted with them. */
+.pa-country-grid > .pa-choice > input {
+  grid-row: 1;
+  grid-column: 1;
+}
+.pa-country-grid > .pa-choice > .pa-choice-name {
+  grid-row: 1;
+  grid-column: 2;
+}
+/* Kept at its own height at the top of the shared band, so the lines inside it
+   line up too. Stretched, a two-line meta would float centred in a four-line
+   band and its first line would sit half a line below its neighbour's. */
+.pa-country-grid > .pa-choice > .pa-choice-meta {
+  grid-row: 2;
+  align-self: start;
+}
+
+/* ------------------------------ intake --------------------------------- */
+
+.pa-select-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--color-forest);
+}
+.pa-select-wrap {
+  position: relative;
+}
+.pa-select {
+  appearance: none;
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 0.9rem;
+  border: 1px solid var(--color-forest);
+  border-radius: 0.55rem;
+  background: var(--color-halfwhite);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  color: var(--color-forest-deep);
+  cursor: pointer;
+}
+.pa-select-caret {
+  position: absolute;
+  top: 50%;
+  right: 0.9rem;
+  translate: 0 -50%;
+  pointer-events: none;
+  color: var(--color-forest);
+}
+.pa-select-caret svg {
+  display: block;
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.pa-table-wrap {
+  margin-top: 1.1rem;
+}
+.pa-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.pa-table caption {
+  padding-bottom: 0.7rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: left;
+}
+.pa-table th,
+.pa-table td {
+  padding: 0.55rem 0.4rem 0.55rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.35;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.pa-table thead th {
+  padding-top: 0;
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pa-table tbody th {
+  font-weight: 500;
+  color: var(--color-forest);
+}
+.pa-table td {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+.pa-table tbody tr[data-selected="true"] th,
+.pa-table tbody tr[data-selected="true"] td {
+  color: var(--color-forest-deep);
+}
+.pa-flag {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-forest);
+}
+
+/* ----------------------------- confirm --------------------------------- */
+
+.pa-confirm {
+  padding-top: clamp(0.5rem, 1.5vh, 1rem);
+  border-top: 1px solid var(--rule);
+}
+.pa-confirm-body {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+.pa-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.pa-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.25rem;
+  border: 1px solid var(--color-forest);
+  border-radius: 999px;
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.pa-button > span:first-child {
+  display: inline-flex;
+}
+.pa-button > span:first-child > svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.pa-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.pa-button:hover:not(:disabled) > span:first-child > svg {
+  transform: translateX(2px);
+}
+.pa-button:disabled {
+  background: none;
+  color: var(--color-ink-soft);
+  border-color: var(--rule-strong);
+  cursor: default;
+}
+.pa-button-quiet {
+  background: none;
+  color: var(--color-forest);
+  border-color: var(--rule-strong);
+}
+.pa-button-quiet:hover:not(:disabled) {
+  border-color: var(--color-forest);
+}
+.pa-status {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+}
+
+/* ------------------------- the consequence ----------------------------- */
+
+.pa-preview {
+  align-self: start;
+  padding: clamp(1.1rem, 2.2vw, 1.75rem);
+  border-radius: clamp(0.85rem, 1.2vw, 1.15rem);
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+  --muted: color-mix(in srgb, var(--color-porcelain) 72%, transparent);
+}
+.pa-preview > .eyebrow {
+  color: var(--muted);
+}
+/* globals paints every focus ring forest, which the pine panel swallows at
+   1.0:1. Same flip globals makes for its own dark bands: acid, 8.15:1 here. */
+.pa-preview :focus-visible {
+  outline-color: var(--color-acid);
+}
+.pa-preview-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+  padding-bottom: clamp(0.85rem, 1.8vh, 1.15rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-porcelain) 22%, transparent);
+}
+.pa-preview-where {
+  font-size: clamp(1.1rem, 1.9vw, 1.5rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+.pa-preview-where .serif {
+  color: var(--color-acid);
+}
+.pa-preview-count {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.pa-big {
+  padding-block: clamp(1rem, 2.2vh, 1.5rem);
+}
+.pa-big dt {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.185em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pa-big dd {
+  margin-top: 0.5rem;
+  font-size: clamp(2.1rem, 4.4vw, 3.1rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.85;
+  color: var(--color-acid);
+}
+.pa-big .pa-big-unit {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--color-porcelain);
+}
+.pa-big-sub {
+  display: block;
+  margin-top: 0.7rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+  color: var(--color-porcelain);
+}
+
+/* Everything the preview has to say beyond the days count, in one small row. */
+.pa-micro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.65rem;
+  padding-block: clamp(0.85rem, 1.8vh, 1.15rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-porcelain) 22%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.pa-micro strong {
+  font-weight: 500;
+  color: var(--color-porcelain);
+}
+/* A missed date is the one thing allowed to shout, even on the pine panel. */
+.pa-micro [data-risk] strong,
+.pa-micro [data-risk] {
+  color: var(--color-acid);
+}
+
+/* Verified vs not, as words and a proportion — never colour alone. */
+.pa-conf {
+  padding-block: clamp(1rem, 2.2vh, 1.5rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-porcelain) 22%, transparent);
+}
+.pa-conf-bar {
+  position: relative;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-porcelain) 26%, transparent);
+  overflow: hidden;
+}
+.pa-conf-bar > span:first-child {
+  display: block;
+  height: 100%;
+  background: var(--color-acid);
+  transform-origin: left center;
+  transition: transform var(--dur-instant) var(--ease-brand);
+}
+.pa-conf p {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--color-porcelain);
+}
+.pa-conf strong {
+  font-weight: 500;
+  color: var(--color-acid);
+}
+
+.pa-admission {
+  padding-top: clamp(0.85rem, 1.8vh, 1.15rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-porcelain) 22%, transparent);
+}
+.pa-admission h3 {
+  margin-top: 0.55rem;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--color-acid);
+}
+.pa-admission p {
+  margin-top: 0.45rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--color-porcelain);
+}
+.pa-preview-caveat {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-porcelain) 22%, transparent);
+}
+.pa-preview-caveat > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  list-style: none;
+}
+.pa-preview-caveat > summary::-webkit-details-marker {
+  display: none;
+}
+.pa-preview-caveat-plus {
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 1px solid color-mix(in srgb, var(--color-porcelain) 34%, transparent);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  line-height: 1;
+  transition: transform var(--dur) var(--ease-brand);
+}
+/* Hover and focus used to land on the same rotation, so the only focus cue was
+   a state the pointer also produces. Hover takes the smaller turn; focus keeps
+   the full one, and the acid ring above says which one it is. */
+.pa-preview-caveat > summary:hover .pa-preview-caveat-plus {
+  transform: rotate(45deg);
+}
+.pa-preview-caveat > summary:focus-visible .pa-preview-caveat-plus {
+  transform: rotate(90deg);
+}
+.pa-preview-caveat[open] .pa-preview-caveat-plus {
+  transform: rotate(135deg);
+}
+.pa-preview-caveat-body {
+  max-width: 62ch;
+  margin-top: 0.7rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--color-porcelain);
+}
+
+.pa-preview-foot {
+  padding-top: clamp(0.85rem, 1.8vh, 1.15rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-porcelain) 22%, transparent);
+}
+.pa-preview-foot > .eyebrow {
+  color: var(--muted);
+}
+.pa-open-milestones {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+.pa-open-milestones li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: baseline;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-porcelain);
+}
+.pa-open-milestones .pa-open-count {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-acid);
+  white-space: nowrap;
+}
+.pa-preview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: clamp(0.9rem, 2vh, 1.25rem);
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-porcelain) 34%, transparent);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+.pa-preview-link > span:first-child {
+  display: inline-flex;
+}
+.pa-preview-link > span:first-child > svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.pa-preview-link:hover > span:first-child > svg {
+  transform: translateX(3px);
+}
+.pa-preview-link:focus-visible > span:first-child > svg {
+  transform: translateX(3px);
+}
+
+/* --------------------------- the deltas ------------------------------- */
+
+.pa-delta {
+  margin-top: clamp(1.5rem, 3vh, 2.25rem);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid var(--color-forest);
+  border-radius: clamp(0.7rem, 1vw, 0.95rem);
+  background: var(--color-halfwhite);
+}
+.pa-delta > .eyebrow {
+  color: var(--color-forest);
+}
+.pa-delta-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+.pa-delta-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) auto minmax(0, 1fr);
+  gap: 0.5rem 0.75rem;
+  align-items: baseline;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.pa-delta-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.pa-delta-key {
+  color: var(--muted);
+}
+.pa-delta-from,
+.pa-delta-to {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-forest);
+}
+.pa-delta-to {
+  color: var(--color-forest-deep);
+  font-weight: 500;
+}
+.pa-delta-move {
+  grid-column: 1 / -1;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.875rem;
+  color: var(--color-ink-soft);
+}
+
+/* -------------------------- honesty + data ----------------------------- */
+
+/* The verified / not-verified split, as two plain definitions. No boxes. */
+.pa-ledger {
+  display: grid;
+  gap: clamp(1rem, 2.2vw, 1.5rem);
+  margin-top: clamp(1.25rem, 2.6vh, 1.75rem);
+}
+.pa-ledger-item {
+  padding-top: clamp(0.85rem, 1.6vw, 1.15rem);
+  border-top: 1px solid var(--rule-strong);
+}
+.pa-ledger-item h3 {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.pa-ledger-item p {
+  max-width: 46ch;
+  margin-top: 0.45rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.pa-ledger-item .pa-ledger-count {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--color-forest);
+}
+/* Not verified is a risk statement, so it wears the signal colour and a rule. */
+.pa-ledger-item[data-tone="signal"] {
+  border-top-color: var(--color-signal);
+}
+.pa-ledger-item[data-tone="signal"] .pa-ledger-count {
+  color: var(--color-signal);
+}
+
+.pa-privacy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--pa-gap);
+}
+.pa-privacy-points {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: clamp(1rem, 2vh, 1.35rem);
+}
+.pa-privacy-points li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.pa-privacy-points li::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-top: 0.55em;
+  background: var(--color-forest);
+}
+.pa-privacy-caveat {
+  margin-top: clamp(1rem, 2vh, 1.35rem);
+  padding: clamp(0.9rem, 1.8vw, 1.2rem);
+  border-left: 2px solid var(--color-forest);
+  border-radius: 0 0.5rem 0.5rem 0;
+  background: var(--color-halfwhite);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-forest);
+}
+
+/* ------------------------------ reset ---------------------------------- */
+
+.pa-danger {
+  margin-top: clamp(1.5rem, 3vh, 2.25rem);
+  border-top: 1px solid var(--color-signal);
+  padding-top: clamp(1rem, 2vh, 1.5rem);
+}
+.pa-danger h3 {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+.pa-danger-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.55rem;
+  padding: 0.14rem 0.55rem 0.16rem;
+  border: 1px solid var(--color-signal);
+  border-radius: 999px;
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--color-signal);
+}
+.pa-danger-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding-block: clamp(0.9rem, 2vh, 1.2rem);
+  border-bottom: 1px solid var(--rule);
+}
+.pa-danger-row:last-child {
+  border-bottom: 0;
+}
+.pa-danger-row p {
+  max-width: 52ch;
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.pa-danger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.pa-button-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--color-signal);
+  border-radius: 999px;
+  background: none;
+  color: var(--color-signal);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.pa-button-danger:hover {
+  transform: translateY(-2px);
+}
+.pa-button-danger > span:first-child {
+  display: inline-flex;
+}
+.pa-button-danger > span:first-child > svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.pa-button-danger:hover > span:first-child > svg {
+  transform: scale(1.15);
+}
+.pa-button-danger-solid {
+  background: var(--color-signal);
+  color: var(--color-porcelain);
+}
+.pa-button-danger-solid:hover > span:first-child > svg {
+  transform: rotate(45deg);
+}
+.pa-danger-row .pa-confirm-ask {
+  margin-top: 0.5rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-signal);
+  font-weight: 500;
+}
+.pa-danger-status {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+}
+
+/* The preview is live, not a loading state. Updated facts settle in one beat,
+   while the native inputs, expanded caveat and keyboard focus stay in place. */
+@keyframes pa-consequence-update {
+  from { transform: translateY(8px); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .path-screen[data-motion="on"] .pa-consequence-update {
+    animation: pa-consequence-update var(--dur-instant) var(--ease-brand);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path-screen *,
+  .path-screen *::before,
+  .path-screen *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================== responsive ============================= */
+
+@media (min-width: 900px) {
+  .pa-ledger {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.5rem, 3vw, 3rem);
+  }
+  .pa-ledger-item p {
+    max-width: none;
+  }
+  .path-form {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    align-items: start;
+  }
+  .pa-preview {
+    position: sticky;
+    top: calc(var(--header-h) + 1rem);
+  }
+  .pa-privacy {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(1.5rem, 4vw, 4rem);
+  }
+  .pa-danger-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(1rem, 3vw, 2.5rem);
+  }
+  .pa-confirm-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2rem);
+  }
+}
+
+@media (min-width: 600px) {
+  .pa-stage-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .pa-country-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .pa-stage-rail {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .pa-country-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .pa-table th,
+  .pa-table td {
+    font-size: 0.6875rem;
+    padding-right: 0.35rem;
+  }
+  .pa-delta-list li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+  .pa-delta-move {
+    grid-column: auto;
+  }
+}

@@ -1,0 +1,954 @@
+/* ============================================================================
+   /route — the dated dependency graph.
+
+   Rules this file keeps to:
+   - Timing is only ever the global aliases: --dur-instant, --dur, --dur-slow,
+     --ease-brand, --ease-out. No literal duration, no literal cubic-bezier.
+   - Reveals are masked (overflow / clip-path), never opacity.
+   - Hover never restyles the element it is on: it only moves or wipes
+     something inside it. Selection is the one persistent state, and it is a
+     wipe too — never a background fill, which would drop real text below the
+     WCAG contrast floor.
+   - Colour comes from the palette tokens. --color-signal is for deadlines and
+     risk only. --color-acid is a fill, never text on the porcelain field
+     (1.75:1 there) and never text on the pine band either.
+   ========================================================================= */
+
+.route-screen {
+  --rt-gap: clamp(0.85rem, 1.6vw, 1.35rem);
+}
+
+/* ------------------------------- hero ---------------------------------- */
+
+.route-hero {
+  padding: calc(var(--header-h) + clamp(2rem, 7vh, 4.75rem)) var(--pad-x)
+    clamp(1.5rem, 3.5vh, 2.75rem);
+}
+
+/*
+ * The h1 says what the page is. It is deliberately smaller than the count below
+ * it, so the graph — not the header — is the focal point.
+ */
+.route-hero h1 {
+  margin-top: 0;
+  font-size: clamp(2.2rem, 5.6vw, 4.25rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 0.94;
+}
+
+/* The line is the mask; the inner span is what travels out from behind it. */
+.rt-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.09em;
+}
+.rt-line > span {
+  display: block;
+  will-change: transform;
+}
+.rt-line .serif {
+  color: color-mix(in srgb, var(--color-forest) 74%, transparent);
+}
+
+/* The only supporting line in the header. "Change target" lives here, quiet. */
+.rt-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  margin-top: clamp(0.9rem, 1.8vw, 1.35rem);
+  padding-top: clamp(0.85rem, 1.6vw, 1.25rem);
+  border-top: 1px solid var(--rule);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.rt-context .rt-target {
+  color: var(--color-forest);
+}
+
+/* The single dominant figure: the axis the whole graph is drawn against. */
+.rt-figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.8rem;
+  margin-top: clamp(1.25rem, 2.4vw, 1.85rem);
+}
+.rt-figure-number {
+  font-size: clamp(2.9rem, 7.5vw, 5.75rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.86;
+  font-variant-numeric: tabular-nums;
+}
+.rt-figure-unit {
+  font-size: clamp(1rem, 1.7vw, 1.4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* Everything else, demoted to one inline row of small text. */
+.rt-micro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.65rem;
+  margin-top: clamp(0.6rem, 1.2vw, 0.9rem);
+  padding-bottom: clamp(1.1rem, 2.2vw, 1.6rem);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.rt-micro strong {
+  font-weight: 500;
+  color: var(--color-forest);
+}
+
+/* Self-drawing underline: nothing about the anchor itself ever animates. */
+.rt-underline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding-bottom: 0.2rem;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0 1px;
+  transition: background-size var(--dur) var(--ease-brand);
+}
+.rt-underline:hover,
+.rt-underline:focus-visible {
+  background-size: 100% 1px;
+}
+.rt-underline svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: none;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.rt-underline:hover svg,
+.rt-underline:focus-visible svg {
+  transform: translate(2px, -2px);
+}
+
+/* ----------------------------- sections -------------------------------- */
+
+.route-section {
+  padding: clamp(2rem, 5vh, 3.5rem) var(--pad-x);
+}
+.route-section + .route-section {
+  border-top: 1px solid var(--rule);
+}
+
+.rt-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  padding-bottom: clamp(0.85rem, 1.8vh, 1.25rem);
+  border-bottom: 1px solid var(--rule);
+}
+.rt-section-head h2 {
+  font-size: clamp(1.45rem, 3.2vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+.rt-section-head p {
+  max-width: 36ch;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* --------------------------- admission model ---------------------------- */
+
+.route-admission {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--rt-gap);
+  padding-top: clamp(1.1rem, 2.4vh, 1.75rem);
+}
+.rt-admission-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-self: start;
+  padding: 0.3rem 0.75rem 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+.rt-admission-flag svg {
+  width: 0.7rem;
+  height: 0.7rem;
+  flex: none;
+  color: var(--color-acid);
+}
+.rt-admission-copy h3 {
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+.rt-admission-copy > p {
+  max-width: 62ch;
+  margin-top: 0.6rem;
+  font-size: 0.9375rem;
+  line-height: 1.62;
+  color: var(--muted);
+}
+
+/* Native <details>, so the full caveat is keyboard-operable for free. */
+.rt-caveat {
+  margin-top: 0.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--rule);
+}
+.rt-caveat > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  list-style: none;
+}
+.rt-caveat > summary::-webkit-details-marker {
+  display: none;
+}
+.rt-caveat-plus {
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  line-height: 1;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.rt-caveat > summary:hover .rt-caveat-plus,
+.rt-caveat > summary:focus-visible .rt-caveat-plus {
+  transform: rotate(90deg);
+}
+.rt-caveat[open] .rt-caveat-plus {
+  transform: rotate(135deg);
+}
+.rt-caveat-body {
+  max-width: 78ch;
+  margin-top: 0.85rem;
+  padding: clamp(0.85rem, 1.6vw, 1.15rem);
+  border-radius: 0.65rem;
+  background: var(--color-halfwhite);
+  font-size: 0.9375rem;
+  line-height: 1.68;
+}
+.rt-caveat-source {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+/* ------------------------------- legend -------------------------------- */
+
+.route-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem clamp(0.85rem, 2vw, 1.75rem);
+  padding-top: clamp(1.1rem, 2.4vh, 1.75rem);
+}
+.route-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--muted);
+}
+.route-legend svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+}
+.rt-legend-key {
+  color: var(--color-forest);
+  font-weight: 500;
+}
+
+/* ------------------------------- graph --------------------------------- */
+
+.route-graph-wrap {
+  padding-top: clamp(1rem, 2.2vh, 1.5rem);
+}
+
+/* The ruler and the rows share one template, so column x never drifts. */
+.route-ruler,
+.route-node {
+  display: grid;
+  align-items: center;
+  gap: 0 clamp(0.6rem, 1.2vw, 1rem);
+  grid-template-columns: 2.5rem minmax(0, 1fr) minmax(8rem, 0.5fr) 5.5rem;
+  grid-template-areas: "mark body track date";
+}
+
+.route-ruler {
+  padding-bottom: 0.7rem;
+}
+.rt-ruler-mark {
+  grid-area: mark;
+}
+.rt-ruler-body {
+  grid-area: body;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.185em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rt-ruler-track {
+  position: relative;
+  grid-area: track;
+  align-self: end;
+  height: 1.9rem;
+  border-bottom: 1px solid var(--rule-strong);
+}
+.rt-ruler-track > span {
+  position: absolute;
+  bottom: 0.3rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rt-ruler-first {
+  left: 0;
+  color: var(--muted);
+}
+.rt-ruler-last {
+  color: var(--color-forest);
+  transform: translateX(-100%);
+}
+.rt-ruler-date {
+  grid-area: date;
+  text-align: right;
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.route-rows-wrap {
+  position: relative;
+}
+.route-edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.rt-edge {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-forest) 38%, transparent);
+  stroke-width: 1.25;
+  transition: stroke var(--dur-instant) var(--ease-out),
+    stroke-width var(--dur-instant) var(--ease-out);
+}
+.rt-edge[data-met="false"] {
+  stroke-dasharray: 3 3.5;
+}
+.rt-edge[data-live="true"] {
+  stroke: var(--color-forest);
+  stroke-width: 2;
+}
+.rt-edge[data-risk="true"] {
+  stroke: var(--color-signal);
+}
+.rt-edge-trace {
+  fill: none;
+  stroke: var(--color-forest);
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: -1;
+}
+.rt-edge-trace[data-risk="true"] {
+  stroke: var(--color-signal);
+}
+.rt-origin-rule {
+  stroke: var(--color-forest);
+  stroke-width: 1.5;
+}
+
+.route-row {
+  border-top: 1px solid var(--rule);
+}
+.route-row:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.route-node {
+  position: relative;
+  width: 100%;
+  padding-block: clamp(0.6rem, 1.3vh, 0.9rem);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Hover and selection both wipe a 2px rule in from the left. No fill, no
+   colour shift on the row itself. */
+.route-node::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  pointer-events: none;
+  background: var(--color-acid);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.route-node:hover::after,
+.route-node:focus-visible::after,
+.route-row[data-selected="true"] .route-node::after {
+  transform: scaleX(1);
+}
+.route-node:focus-visible {
+  outline-offset: -3px;
+}
+/* The selected row also pushes its tick out — a move inside, not a restyle. */
+.route-row[data-selected="true"] .rt-tick {
+  transform: scaleY(1.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-acid) 55%, transparent);
+}
+
+.rt-mark {
+  grid-area: mark;
+  display: grid;
+  place-content: center;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.route-node:hover .rt-mark,
+.route-node:focus-visible .rt-mark {
+  transform: scale(1.15);
+}
+.rt-mark svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.rt-body {
+  grid-area: body;
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.rt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.5rem;
+}
+.rt-phase {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rt-title {
+  font-size: clamp(0.9375rem, 1.35vw, 1.125rem);
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.rt-waits {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+}
+.rt-waits::before {
+  content: "waits on ";
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Status, hard deadline and confidence are all spelled out in words; the
+   shape glyph and the tick shape are the redundant second channel. Only the
+   hard deadline keeps a ring — it is the one that has to shout. */
+.rt-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.1rem 0.16rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.rt-chip[data-kind="status"] {
+  color: var(--color-forest);
+}
+.rt-chip[data-kind="hard"] {
+  padding-inline: 0.55rem;
+  border: 1px solid var(--color-signal);
+  border-radius: 999px;
+  color: var(--color-signal);
+}
+.rt-chip[data-kind="conf"] {
+  color: var(--color-ink-soft);
+}
+
+.rt-track {
+  grid-area: track;
+  position: relative;
+  align-self: center;
+  height: 1px;
+  background: var(--rule);
+}
+.rt-tick {
+  position: absolute;
+  top: 50%;
+  left: var(--tick, 50%);
+  width: 2px;
+  height: 1.1rem;
+  translate: -50% -50%;
+  background: var(--color-forest);
+  transition: transform var(--dur-instant) var(--ease-brand);
+}
+.rt-tick[data-hard="true"] {
+  width: 7px;
+  color: var(--color-signal);
+  background: linear-gradient(
+    to right,
+    currentColor 0 2px,
+    transparent 2px 5px,
+    currentColor 5px 7px
+  );
+}
+.rt-tick[data-status="risk"] {
+  height: 1.6rem;
+  background: var(--color-signal);
+}
+.rt-tick[data-status="done"] {
+  opacity: 0.45;
+}
+.rt-tick[data-status="now"] {
+  height: 1.6rem;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-acid) 45%, transparent);
+}
+
+.rt-date {
+  grid-area: date;
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  text-align: right;
+}
+.rt-count {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--color-forest);
+}
+.rt-date time {
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.rt-narrow-note {
+  display: none;
+  margin-top: 0.85rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+}
+
+/* --------------------------- detail panel ------------------------------ */
+
+.route-detail {
+  margin-top: clamp(1.5rem, 3vh, 2.25rem);
+  padding: clamp(1.1rem, 2.2vw, 1.85rem);
+  border: 1px solid var(--rule-strong);
+  border-radius: clamp(0.75rem, 1.1vw, 1rem);
+  background: var(--color-halfwhite);
+}
+.route-detail:focus-visible {
+  outline-offset: 4px;
+}
+.rt-detail-head {
+  display: grid;
+  gap: 0.5rem;
+}
+.rt-detail-head h3 {
+  font-size: clamp(1.25rem, 2.6vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.038em;
+  line-height: 1.03;
+  overflow-wrap: anywhere;
+}
+.rt-detail-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+}
+.rt-detail-due {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.rt-detail-due strong {
+  color: var(--color-forest);
+  font-weight: 500;
+}
+.rt-detail-summary {
+  max-width: 66ch;
+  margin-top: 0.85rem;
+  font-size: 0.9375rem;
+  line-height: 1.62;
+  color: var(--color-ink-soft);
+}
+.rt-detail-note {
+  max-width: 66ch;
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-left: 2px solid var(--color-signal);
+  border-radius: 0 0.4rem 0.4rem 0;
+  background: color-mix(in srgb, var(--color-signal) 7%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-forest);
+}
+
+.rt-detail-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  margin-top: clamp(1.25rem, 2.6vh, 1.75rem);
+  padding-top: clamp(1rem, 2vh, 1.35rem);
+  border-top: 1px solid var(--rule);
+}
+.rt-detail-cols h4,
+.rt-trust h4 {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.185em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rt-task-list {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+.rt-task-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.55rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.rt-task-list li::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-top: 0.52em;
+  border: 1px solid var(--color-ink-soft);
+}
+
+.rt-deps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+}
+.rt-dep {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.rt-dep:hover {
+  transform: translateY(-2px);
+}
+.rt-dep[data-met="false"] {
+  border-color: var(--color-signal);
+}
+.rt-dep-arrow {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--muted);
+}
+.rt-none {
+  margin-top: 0.8rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: var(--color-ink-soft);
+}
+
+/* The trust block: every number links back to the page it was read from. */
+.rt-trust {
+  margin-top: 1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.6rem;
+  background: var(--color-parchment);
+}
+.rt-trust p {
+  margin-top: 0.45rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-forest-deep);
+}
+.rt-trust-level {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.rt-trust-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.5rem;
+  margin-top: 0.65rem;
+  color: var(--color-forest-deep);
+  text-decoration: none;
+}
+.rt-trust-url {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.rt-trust-source:hover .rt-trust-url,
+.rt-trust-source:focus-visible .rt-trust-url {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rt-trust-newtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: none;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-forest);
+}
+.rt-trust-arrow {
+  display: inline-flex;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.rt-trust-source:hover .rt-trust-arrow {
+  transform: translate(2px, -2px);
+}
+
+.rt-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: clamp(1.25rem, 2.6vh, 1.75rem);
+  padding-top: clamp(0.9rem, 1.8vh, 1.15rem);
+  border-top: 1px solid var(--rule);
+}
+.rt-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1.15rem;
+  border: 1px solid var(--color-forest);
+  border-radius: 999px;
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.rt-button > span:first-child {
+  display: inline-flex;
+}
+.rt-button > span:first-child > svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  transition: transform var(--dur-instant) var(--ease-out);
+}
+.rt-button:hover {
+  transform: translateY(-2px);
+}
+.rt-button:hover > span:first-child > svg {
+  transform: translateX(2px);
+}
+
+.route-empty {
+  margin-top: clamp(1.5rem, 3vh, 2.25rem);
+  padding: clamp(1.1rem, 2.2vw, 1.75rem);
+  border: 1px dashed var(--rule-strong);
+  border-radius: 0.75rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+}
+
+/* ------------------------------- footer -------------------------------- */
+
+.route-footnote {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  max-width: 78ch;
+}
+.route-footnote p {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.route-footnote strong {
+  color: var(--color-forest);
+  font-weight: 500;
+}
+
+/* Selection and its detail arrive together; arrow-key navigation never waits. */
+@keyframes rt-relationship-trace {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: -1; }
+}
+
+@keyframes rt-selection-update {
+  from { transform: translateY(8px); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .route-screen[data-motion="on"] .rt-edge-trace {
+    animation: rt-relationship-trace var(--dur-instant) var(--ease-brand);
+  }
+  .route-screen[data-motion="on"] .rt-selection-update {
+    animation: rt-selection-update var(--dur-instant) var(--ease-brand);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-screen *,
+  .route-screen *::before,
+  .route-screen *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================== responsive ============================= */
+
+@media (min-width: 900px) {
+  .route-admission {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    gap: clamp(1.5rem, 3vw, 3rem);
+  }
+  .rt-detail-cols {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  }
+  .route-footnote {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(1rem, 3vw, 2.5rem);
+  }
+}
+
+@media (max-width: 899px) {
+  /*
+   * Below 900px the axis column cannot stay wide enough for the connecting
+   * lines to mean anything, so the graph changes shape deliberately: the axis
+   * becomes the countdown on the right of each row and every dependency is
+   * stated in words on the row and in the detail below. Same information, no
+   * squinting.
+   */
+  .route-edges,
+  .rt-ruler-track,
+  .rt-track {
+    display: none;
+  }
+  .rt-narrow-note {
+    display: block;
+  }
+  .rt-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+  .rt-section-head p {
+    text-align: left;
+  }
+  .route-ruler {
+    grid-template-columns: 1.75rem minmax(0, 1fr) 5.25rem;
+    grid-template-areas: "mark body date";
+  }
+  .route-node {
+    grid-template-columns: 1.75rem minmax(0, 1fr) 5.25rem;
+    grid-template-areas: "mark body date";
+  }
+  .rt-mark {
+    padding-top: 0.2rem;
+    align-self: start;
+  }
+  .rt-body {
+    align-self: start;
+  }
+  .rt-date {
+    align-self: start;
+    padding-top: 0.1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .route-detail {
+    padding: 1rem;
+  }
+}

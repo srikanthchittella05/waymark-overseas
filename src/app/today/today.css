@@ -1,0 +1,761 @@
+/* =============================================================================
+   /today — "what should I do next, and why now"
+
+   Motion vocabulary is borrowed wholesale from globals.css: only the aliases
+   --dur-instant / --dur / --dur-slow and --ease-brand / --ease-out appear here.
+   Reveals are masked (translate out of an overflow:hidden box), never a fade.
+   Hover never restyles a link, pill or row — it only moves something inside.
+   Colour never carries meaning on its own: every status has a word and a shape.
+   ========================================================================== */
+
+.today {
+  --rule: color-mix(in srgb, var(--color-forest) 15%, transparent);
+  --rule-strong: color-mix(in srgb, var(--color-forest) 28%, transparent);
+  --muted: color-mix(in srgb, var(--color-ink) 66%, transparent);
+  padding-bottom: clamp(2rem, 5vw, 4rem);
+}
+
+/* ------------------------------- head ---------------------------------- */
+
+.today-head {
+  padding: calc(var(--header-h) + clamp(1.5rem, 4vw, 3.5rem)) var(--pad-x) 0;
+}
+
+/*
+ * The h1 says what the page is. It is deliberately smaller than the countdown in
+ * the card below it, so the answer — not the headline — is the focal point.
+ */
+.today-title {
+  font-size: clamp(2.2rem, 5.4vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 0.94;
+}
+
+/* The mask: content enters from outside its own box. */
+.today-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.09em;
+}
+.today-mask-inner {
+  display: block;
+  will-change: transform;
+}
+
+/* The only supporting line in the header. "Change target" lives here, quiet. */
+.today-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  margin-top: clamp(0.9rem, 1.8vw, 1.35rem);
+  padding-top: clamp(0.85rem, 1.6vw, 1.25rem);
+  border-top: 1px solid var(--rule);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.today-context .today-target {
+  color: var(--color-forest);
+}
+
+/* ---------------------------- first run -------------------------------- */
+
+/* A fact about the plan, not a second card competing with the focus card. */
+.today-firstrun {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1.25rem;
+  margin: clamp(1.25rem, 2.5vw, 1.85rem) var(--pad-x) 0;
+  padding-block: clamp(0.75rem, 1.4vw, 1rem);
+  border-block: 1px solid var(--rule);
+}
+.today-firstrun-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+.today-firstrun p {
+  flex: 1 1 18rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ----------------------------- focus card ------------------------------ */
+
+.today-focus {
+  display: grid;
+  gap: clamp(1.25rem, 2.4vw, 2.25rem);
+  grid-template-areas:
+    "head"
+    "clock"
+    "why"
+    "work";
+  grid-template-columns: minmax(0, 1fr);
+  margin: clamp(1.5rem, 3.5vw, 3rem) var(--pad-x) 0;
+  padding: clamp(1.25rem, 2.6vw, 2.6rem);
+  border: 1px solid var(--rule);
+  border-radius: clamp(1rem, 1.7vw, 1.7rem);
+  background: var(--color-halfwhite);
+  box-shadow:
+    0 60px 100px -70px color-mix(in srgb, var(--color-forest) 65%, transparent),
+    0 2px 10px -8px color-mix(in srgb, var(--color-forest) 30%, transparent);
+}
+
+.today-focus-head {
+  grid-area: head;
+}
+.today-clock {
+  grid-area: clock;
+}
+.today-why {
+  grid-area: why;
+}
+.today-work {
+  grid-area: work;
+  align-self: start;
+}
+
+/* The clock gets the full width, so the one dominant number lands on one line. */
+@media (min-width: 900px) {
+  .today-focus {
+    grid-template-areas:
+      "head  head"
+      "clock clock"
+      "why   work";
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(2rem, 4vw, 4rem);
+  }
+}
+
+.today-focus-phase {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.today-focus-title {
+  margin-top: clamp(0.75rem, 1.5vw, 1.15rem);
+  font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.042em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+.today-focus-summary {
+  max-width: 46ch;
+  margin-top: clamp(0.65rem, 1.3vw, 1rem);
+  font-size: clamp(1rem, 1.15vw, 1.125rem);
+  line-height: 1.5;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+/*
+ * A single hyphenated token that must not split. A hyphen is a break opportunity
+ * in the line-breaking algorithm and no line-level property takes it away, so the
+ * token itself carries the non-breaking behaviour.
+ */
+.today-token {
+  white-space: nowrap;
+}
+
+/* Status shape — pairs with the word in the label, so colour is never alone. */
+.today-focus-mark {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--color-forest);
+}
+.today-focus-mark[data-status="now"] {
+  border-radius: 50%;
+  background: currentColor;
+}
+.today-focus-mark[data-status="next"] {
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.today-focus-mark[data-status="later"] {
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.today-focus-mark[data-status="risk"] {
+  color: var(--color-signal);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  background: currentColor;
+}
+.today-focus-mark[data-status="done"] {
+  position: relative;
+  border-radius: 50%;
+  background: var(--color-forest);
+  color: var(--color-acid);
+}
+/* Check mark inside the dot: the "done" shape, not a colour. */
+.today-focus-mark[data-status="done"]::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  font-size: 0.5625rem;
+  line-height: 1;
+}
+
+/* ------------------------------ clock ---------------------------------- */
+
+/* The dominant number on the screen. Everything else is set smaller than it. */
+.today-clock {
+  padding-block: clamp(0.5rem, 1vw, 0.75rem);
+  border-block: 1px solid var(--rule);
+}
+.today-clock-line {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.5rem, 1vw, 0.85rem);
+  flex-wrap: wrap;
+}
+.today-clock-number {
+  font-size: clamp(3.4rem, 11vw, 8rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.82;
+  font-variant-numeric: tabular-nums;
+}
+.today-clock-unit {
+  font-size: clamp(1.05rem, 2.1vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.today-clock-date {
+  margin-top: clamp(0.6rem, 1.2vw, 0.9rem);
+  font-size: 0.875rem;
+  letter-spacing: 0.005em;
+  color: var(--muted);
+}
+/* Signal red is reserved for dates that have gone by. */
+.today-focus[data-tone="late"] .today-clock-number,
+.today-focus[data-tone="late"] .today-clock-date {
+  color: var(--color-signal);
+}
+.today-focus[data-tone="late"] .today-clock-date {
+  font-weight: 500;
+}
+
+/* ------------------------------- why now ------------------------------- */
+
+.today-why-title,
+.today-work-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.today-why-list {
+  margin-top: clamp(0.7rem, 1.4vw, 1rem);
+}
+.today-why-list li {
+  position: relative;
+  padding-block: 0.5rem;
+  padding-left: 1.15rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.today-why-list li::before {
+  content: "";
+  position: absolute;
+  top: 1.02em;
+  left: 0;
+  width: 0.5rem;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+/* ------------------------------- tasks --------------------------------- */
+
+/*
+ * No second box inside the card. The task list is the same field as "why now",
+ * split by a rule — a nested bordered panel here would halve the card's weight.
+ */
+.today-work {
+  padding-top: clamp(1rem, 2vw, 1.5rem);
+  border-top: 1px solid var(--rule);
+}
+.today-work-count {
+  letter-spacing: 0.1em;
+  color: var(--color-forest);
+}
+.today-tasks {
+  margin-top: clamp(0.5rem, 1vw, 0.85rem);
+}
+/*
+ * The work list is a list, not four checkboxes: the engine stores one tick per
+ * milestone, so there is nothing here to tick. It keeps the same rule-and-dash
+ * rhythm as "why now" so the card still reads as one field.
+ */
+.today-task {
+  position: relative;
+  padding-block: 0.7rem;
+  padding-left: 1.15rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.today-task::before {
+  content: "";
+  position: absolute;
+  top: 1.22em;
+  left: 0;
+  width: 0.5rem;
+  height: 1px;
+  background: var(--rule-strong);
+}
+.today-task:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.today-work-foot {
+  margin-top: clamp(0.75rem, 1.5vw, 1rem);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.today-work .today-pill {
+  margin-top: clamp(0.85rem, 1.7vw, 1.15rem);
+}
+
+/* Checkbox: a real input, drawn. No hover restyle — focus does the talking. */
+.today-box {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: 0.12em;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease-brand),
+    border-color var(--dur) var(--ease-brand);
+}
+.today-box:checked {
+  background: var(--color-forest);
+  border-color: var(--color-forest);
+}
+.today-box:checked::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.85rem;
+  margin-top: -0.16rem;
+  border: 2px solid var(--color-acid);
+  border-block-start: 0;
+  border-inline-start: 0;
+  transform: rotate(42deg);
+}
+
+/* ----------------------------- complete -------------------------------- */
+
+.today-complete {
+  grid-template-areas: none;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  justify-items: start;
+}
+@media (min-width: 900px) {
+  .today-complete {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+  }
+}
+.today-complete-title {
+  font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.042em;
+  line-height: 0.98;
+}
+.today-complete p {
+  max-width: 46ch;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* ------------------------------ blocked -------------------------------- */
+
+.today-blocked {
+  margin: clamp(1.25rem, 2.5vw, 2rem) var(--pad-x) 0;
+  padding: clamp(1.1rem, 2.2vw, 1.9rem);
+  border: 1px solid color-mix(in srgb, var(--color-forest) 14%, transparent);
+  border-radius: clamp(0.9rem, 1.4vw, 1.4rem);
+  background: color-mix(in srgb, var(--color-acid) 12%, transparent);
+}
+.today-blocked:focus-visible {
+  outline-color: var(--color-forest);
+}
+.today-blocked-title {
+  font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.today-blocked-copy {
+  max-width: 56ch;
+  margin-top: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.today-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: clamp(0.9rem, 1.8vw, 1.25rem);
+}
+.today-chip {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.4vw, 1.1rem);
+  max-width: 100%;
+  padding: 0.6rem 0.7rem 0.6rem 1rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: var(--color-halfwhite);
+  cursor: pointer;
+  /* The pill never restyles on hover: only the arrow inside it travels. */
+  transition: none;
+}
+.today-chip-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  text-align: left;
+  text-wrap: pretty;
+}
+.today-chip-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-forest) 7%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.today-chip-action svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.today-chip:hover .today-chip-action svg,
+.today-chip:focus-visible .today-chip-action svg {
+  transform: translateX(3px);
+}
+.today-blocked-foot {
+  margin-top: clamp(0.9rem, 1.8vw, 1.25rem);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* -------------------------------- risk --------------------------------- */
+
+.today-risk {
+  margin: clamp(2rem, 4.5vw, 3.5rem) var(--pad-x) 0;
+}
+.today-risk-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-bottom: clamp(0.8rem, 1.5vw, 1.15rem);
+  border-bottom: 1px solid var(--rule);
+}
+.today-section-title {
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.today-section-note {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.today-risk-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr));
+  gap: 1px;
+  margin-top: 1px;
+  background: var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.today-risk-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: clamp(1rem, 1.8vw, 1.4rem) clamp(0.85rem, 1.5vw, 1.2rem);
+  background: var(--paper);
+}
+.today-risk-phase {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.today-risk-late {
+  color: var(--color-signal);
+}
+.today-risk-title {
+  font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+  font-weight: 500;
+  letter-spacing: -0.028em;
+  line-height: 1.15;
+  text-wrap: pretty;
+}
+.today-risk-date {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.today-risk-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: start;
+  margin-top: auto;
+  padding-top: 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  /* Underline draws itself; the row and the label never change colour. */
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0 1px;
+  transition: background-size var(--dur) var(--ease-brand);
+}
+.today-risk-done:hover,
+.today-risk-done:focus-visible {
+  background-size: 100% 1px;
+}
+.today-risk-done-mark {
+  display: grid;
+  place-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  font-size: 0.7rem;
+  line-height: 1;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.today-risk-done:hover .today-risk-done-mark,
+.today-risk-done:focus-visible .today-risk-done-mark {
+  transform: scale(1.1);
+}
+.today-risk-more {
+  padding-top: clamp(0.9rem, 1.8vw, 1.25rem);
+  font-size: 0.875rem;
+}
+
+/* -------------------------------- band --------------------------------- */
+
+/*
+ * The band is now a footer, not a second focal point: a micro-stat line, a thin
+ * meter and the honesty statement. No figure here competes with the countdown.
+ */
+.today-band {
+  margin-top: clamp(2.5rem, 6vw, 5rem);
+  padding: clamp(2rem, 4vw, 3.25rem) var(--pad-x);
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+  --rule: color-mix(in srgb, var(--color-porcelain) 18%, transparent);
+  --rule-strong: color-mix(in srgb, var(--color-porcelain) 30%, transparent);
+  --muted: color-mix(in srgb, var(--color-porcelain) 68%, transparent);
+}
+/* A forest-green ring would vanish on this band. */
+.today-band :focus-visible {
+  outline-color: var(--color-acid);
+}
+
+/* One demoted inline row of small text — never a second row of tiles. */
+.today-micro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.65rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+}
+.today-micro strong {
+  font-weight: 500;
+  color: var(--color-porcelain);
+}
+
+.today-meter {
+  height: 3px;
+  margin-top: 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-porcelain) 18%, transparent);
+  overflow: hidden;
+}
+.today-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-acid);
+  transform-origin: left center;
+  transition: transform var(--dur-instant) var(--ease-brand);
+}
+
+.today-honest {
+  max-width: 58ch;
+  margin-top: clamp(1.25rem, 2.4vw, 1.85rem);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.today-honest strong {
+  font-weight: 500;
+  color: var(--color-porcelain);
+}
+
+.today-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.75rem;
+  margin-top: clamp(1.25rem, 2.4vw, 1.85rem);
+  padding-top: clamp(0.85rem, 1.7vw, 1.25rem);
+  border-top: 1px solid var(--rule);
+}
+
+/* --------------------------- links and pills --------------------------- */
+
+/* Self-drawing underline: the measured OFF+BRAND affordance, no colour change. */
+.today-underline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding-bottom: 0.2rem;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0 1px;
+  transition: background-size var(--dur) var(--ease-brand);
+}
+.today-underline:hover,
+.today-underline:focus-visible {
+  background-size: 100% 1px;
+}
+.today-underline svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: none;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.today-underline:hover svg,
+.today-underline:focus-visible svg {
+  transform: translateX(3px);
+}
+
+/* Only the clear-everything action on the empty state still reads as a pill. */
+.today-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem 0.7rem 0.6rem 1.4rem;
+  border-radius: 999px;
+  background: var(--color-acid);
+  color: var(--color-forest-deep);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  /* Identical background, border and radius at rest and on hover. */
+}
+.today-pill-quiet {
+  background: none;
+  color: inherit;
+  box-shadow: inset 0 0 0 1px var(--rule-strong);
+}
+.today-pill-arrow {
+  display: grid;
+  place-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-forest) 10%, transparent);
+}
+.today-pill svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.today-pill:hover svg,
+.today-pill:focus-visible svg {
+  transform: translateX(3px);
+}
+
+/* New answers settle immediately after the engine commits; controls never exit.
+   The server renders data-motion="off", so no-JS content is already at rest. */
+@keyframes today-step-update {
+  from { transform: translateY(10px); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .today[data-motion="on"] .today-step-update {
+    animation: today-step-update var(--dur-instant) var(--ease-brand);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today *,
+  .today *::before,
+  .today *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ----------------------------- responsive ------------------------------ */
+
+@media (max-width: 600px) {
+  .today-risk-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
