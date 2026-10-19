@@ -43,3 +43,6 @@ next-env.d.ts
 # Forensic recovery archive (provenance for the 18 Oct 2026 restore).
 # Kept on disk, deliberately not committed — it is evidence, not product.
 /.recovery-archive
+
+# local dev server log
+.dev.log
