@@ -67,6 +67,31 @@ every request so a plan is never served as a dateless skeleton. `/path` is also 
 it validates optional country/intake URL choices as an **unsaved** draft, selecting an
 upcoming intake when none is supplied. Only the landing is static.
 
+## Dates
+
+Every date on screen goes through `src/lib/format-date.ts`, one helper, one format:
+`2026-09-27` → `27 Sept 2026`. It is a fixed month table, not `Intl`.
+
+That is deliberate. `Intl.DateTimeFormat` and `toLocaleDateString` resolve against
+whatever locale data the host happens to ship, and the hosts disagree: CLDR (Node,
+Chrome, Firefox, Edge) writes the en-GB short month for September as `Sept`, while
+Apple's ICU — the one inside Safari and every WebKit browser — writes `Sep`. The
+server-rendered HTML and the hydrated tree then carry different text, and React
+throws *"Hydration failed because the server rendered text didn't match the client"*
+on any September date. Chromium hid it, because Chromium and Node happen to agree.
+
+A fixed table takes the locale out of the render path, so the server and every
+browser print the same characters.
+
+## Dev-mode notices
+
+**"Cache disabled" in the bottom-left corner** is a Next.js dev-tools badge, not a
+fault in this app. It appears when the browser asks the dev server to skip its
+caches — which Chrome does when DevTools → Network → **Disable cache** is ticked, or
+on a hard reload (`⌘⇧R`). A normal reload (`⌘R`) sends `max-age=0` and does not
+trigger it. Untick **Disable cache** and the badge goes away. It cannot appear in a
+production build: the dev overlay does not exist there.
+
 ## Layout
 
 ```
@@ -84,6 +109,7 @@ src/
     ui/                CustomCursor, native React PageTransition
   lib/
     engine/            country-cycles, plan, profile, destinations
+    format-date.ts     the one date formatter (see "Dates" above)
 ```
 
 Each screen owns its stylesheet on purpose, so two screens can never collide on

@@ -21,6 +21,7 @@ import {
   type PlanStep,
 } from "@/lib/engine/plan";
 import { usePlan, usePlanActions, useProfile } from "@/lib/engine/profile";
+import { formatPlanDate } from "@/lib/format-date";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
 
 /*
@@ -32,27 +33,6 @@ import { useMotionPreferences } from "@/components/providers/MotionProvider";
  * relationship. A generic node library would throw the dating away, ship its
  * own chrome and hand us a keyboard model we would then have to fight.
  */
-
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
-
-/** Deterministic, locale-free, UTC — the engine parses dates as UTC midnight. */
-function formatDate(iso: string): string {
-  const [year, month, day] = iso.split("-");
-  return `${Number(day)} ${MONTHS[Number(month) - 1]} ${year}`;
-}
 
 /** T-300 / T / T+60, with a real minus sign rather than a hyphen. */
 function countdown(offsetDays: number): string {
@@ -406,7 +386,7 @@ export default function RouteGraph({
     const step = byId.get(id);
     if (!step) return;
     setAnnouncement(
-      `${step.title} selected. Due ${formatDate(step.dueDate)}. ${STATUS_WORD[step.status]}.`,
+      `${step.title} selected. Due ${formatPlanDate(step.dueDate)}. ${STATUS_WORD[step.status]}.`,
     );
   };
 
@@ -464,7 +444,7 @@ export default function RouteGraph({
         {/* One context line. "Change target" lives here, quiet. */}
         <p className="rt-context">
           {plan.country.name} · {plan.intake.label} · course starts{" "}
-          <time dateTime={plan.intake.startDate}>{formatDate(plan.intake.startDate)}</time> ·{" "}
+          <time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time> ·{" "}
           <Link className="rt-underline rt-target" href="/path">
             Change target <ArrowRight />
           </Link>
@@ -543,7 +523,7 @@ export default function RouteGraph({
             <span className="rt-ruler-body">Milestone</span>
             <span className="rt-ruler-track" ref={rulerRef}>
               <span className="rt-ruler-first">
-                {firstDue ? formatDate(firstDue.dueDate) : ""}
+                {firstDue ? formatPlanDate(firstDue.dueDate) : ""}
               </span>
               <span
                 className="rt-ruler-last"
@@ -735,7 +715,7 @@ export default function RouteGraph({
 
                       <span className="rt-date">
                         <span className="rt-count">{countdown(step.offsetDays)}</span>
-                        <time dateTime={step.dueDate}>{formatDate(step.dueDate)}</time>
+                        <time dateTime={step.dueDate}>{formatPlanDate(step.dueDate)}</time>
                       </span>
                     </button>
                   </li>
@@ -789,7 +769,7 @@ export default function RouteGraph({
                   </span>
                 </p>
                 <p className="rt-detail-due">
-                  Due <strong>{formatDate(selected.dueDate)}</strong> —{" "}
+                  Due <strong>{formatPlanDate(selected.dueDate)}</strong> —{" "}
                   <strong>{countdown(selected.offsetDays)}</strong>,{" "}
                   {countdownWords(selected)}
                   {selected.offsetDays < 0 ? ", after your course has started" : ""}.

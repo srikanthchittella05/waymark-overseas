@@ -18,6 +18,7 @@ import {
   type Stage,
 } from "@/lib/engine/plan";
 import { usePlan, usePlanActions, useProfile } from "@/lib/engine/profile";
+import { formatPlanDate } from "@/lib/format-date";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
 
 /*
@@ -27,21 +28,6 @@ import { useMotionPreferences } from "@/components/providers/MotionProvider";
  * summary of one.
  */
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
-
 type DraftTarget = { stage: Stage; countryCode: string; intakeId: string };
 
 /* Unsaved answers are held against the exact profile they were made from. When
@@ -49,12 +35,6 @@ type DraftTarget = { stage: Stage; countryCode: string; intakeId: string };
    stops matching and the draft silently falls back to what is saved — no effect,
    no cascading render, and no way to end up previewing a stale answer. */
 type PendingEdits = { base: Profile; value: Partial<DraftTarget> };
-
-/** Deterministic, locale-free, UTC — the engine parses dates as UTC midnight. */
-function formatDate(iso: string): string {
-  const [year, month, day] = iso.split("-");
-  return `${Number(day)} ${MONTHS[Number(month) - 1]} ${year}`;
-}
 
 function countdown(offsetDays: number): string {
   if (offsetDays === 0) return "T";
@@ -280,7 +260,7 @@ export default function PathForm({ initialTarget }: {
     setTarget(draft.countryCode, draft.intakeId);
     setLinkedTarget(undefined);
     setNotice(
-      `Saved: ${activeOption.name} · ${activeIntake.label}, starting ${formatDate(
+      `Saved: ${activeOption.name} · ${activeIntake.label}, starting ${formatPlanDate(
         activeIntake.startDate,
       )}. The route has been rebuilt from that date.`,
     );
@@ -314,14 +294,14 @@ export default function PathForm({ initialTarget }: {
   const deltas = [
     {
       key: "First deadline",
-      from: savedFirst ? formatDate(savedFirst) : "—",
-      to: draftFirst ? formatDate(draftFirst) : "—",
+      from: savedFirst ? formatPlanDate(savedFirst) : "—",
+      to: draftFirst ? formatPlanDate(draftFirst) : "—",
       move: movedBy(deltaFirst, ""),
     },
     {
       key: "Departure",
-      from: formatDate(savedPlan.intake.startDate),
-      to: formatDate(activeIntake.startDate),
+      from: formatPlanDate(savedPlan.intake.startDate),
+      to: formatPlanDate(activeIntake.startDate),
       move: movedBy(deltaStart, ""),
     },
     {
@@ -452,7 +432,7 @@ export default function PathForm({ initialTarget }: {
                 >
                   {activeOption.intakes.map((intake) => (
                     <option key={intake.id} value={intake.id}>
-                      {intake.label} — course starts {formatDate(intake.startDate)}
+                      {intake.label} — course starts {formatPlanDate(intake.startDate)}
                     </option>
                   ))}
                 </select>
@@ -495,9 +475,9 @@ export default function PathForm({ initialTarget }: {
                             <span className="pa-flag">Using this one</span>
                           ) : null}
                         </th>
-                        <td>{formatDate(row.intake.startDate)}</td>
+                        <td>{formatPlanDate(row.intake.startDate)}</td>
                         <td>
-                          {row.first ? formatDate(row.first) : "—"}
+                          {row.first ? formatPlanDate(row.first) : "—"}
                           <span className="pa-flag">{daysWord(row.daysToStart)} out</span>
                         </td>
                       </tr>
@@ -570,7 +550,7 @@ export default function PathForm({ initialTarget }: {
               </dt>
               <dd>
                 {Math.abs(daysToStart)} <span className="pa-big-unit">days</span>
-                <span className="pa-big-sub">Counting down to {formatDate(activeIntake.startDate)}.</span>
+                <span className="pa-big-sub">Counting down to {formatPlanDate(activeIntake.startDate)}.</span>
               </dd>
             </dl>
 
@@ -581,7 +561,7 @@ export default function PathForm({ initialTarget }: {
               </span>
               <span aria-hidden="true">·</span>
               <span>
-                first deadline {draftFirst ? formatDate(draftFirst) : "—"}
+                first deadline {draftFirst ? formatPlanDate(draftFirst) : "—"}
               </span>
               <span aria-hidden="true">·</span>
               <span data-risk={draftPlan.counts.risk > 0 || undefined}>
