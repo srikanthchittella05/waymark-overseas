@@ -2,6 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import { buildPlan, getCountry, getIntake, type Completion, type Plan, type Profile, type Stage } from "./plan";
+import { DEFAULT_PROFILE } from "./defaults";
 
 /*
  * Local-first persistence. No account, no server: a student's plan is theirs,
@@ -11,12 +12,6 @@ import { buildPlan, getCountry, getIntake, type Completion, type Plan, type Prof
 
 const PROFILE_KEY = "waymark.profile.v1";
 const DONE_KEY = "waymark.done.v1";
-
-export const DEFAULT_PROFILE: Profile = {
-  stage: "exploring",
-  countryCode: "US",
-  intakeId: "us-fall-2027",
-};
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
