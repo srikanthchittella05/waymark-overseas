@@ -266,7 +266,14 @@ export default function PathForm({ initialTarget }: {
     );
   };
 
-  const ticked = useMemo(() => Object.values(done).filter(Boolean).length, [done]);
+  // Count only ticks that belong to the current plan. `done` is a global map
+  // keyed by milestone id, so it can carry stale entries from a previous
+  // country/intake; counting those inflates this figure past plan.counts.done
+  // and makes the two counters disagree. Filter to the current plan's step ids.
+  const ticked = useMemo(() => {
+    const ids = new Set(savedPlan.steps.map((s) => s.id));
+    return Object.entries(done).filter(([id, v]) => v && ids.has(id)).length;
+  }, [done, savedPlan]);
 
   const draftFirst = firstDueOf(draftPlan);
   const savedFirst = firstDueOf(savedPlan);
