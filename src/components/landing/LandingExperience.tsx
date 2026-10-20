@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
@@ -19,8 +20,7 @@ import "./world-motion.css";
 gsap.registerPlugin(useGSAP, ScrollTrigger, CustomEase, SplitText);
 CustomEase.create("waymark", "0.65,0.05,0,1");
 
-// JourneySculpture (3D infinity) replaced by an inline aeroplane that travels
-// along the route path below — see the world-opening motion in useGSAP.
+const JourneySculpture = dynamic(() => import("./JourneySculpture"), { ssr: false });
 
 const PRODUCT_VIEWS = [
   { href: "/today", name: "Today", promise: "One next move.", copy: "What to do next, why it matters now, and what needs to happen first.", detail: "PRIORITY / CONTEXT / BLOCKERS" },
@@ -41,6 +41,14 @@ function Arrow({ diagonal = false, className = "" }: { diagonal?: boolean; class
   return <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? "M5 19 19 5M5 5h14v14" : "M4 12h16m-7-7 7 7-7 7"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
+function SculptureFallback() {
+  return (
+    // Generated from our own mesh, camera and studio. Static and GPU modes share
+    // one silhouette/material instead of switching from a tube to a ribbon.
+    <Image className="sculpture-fallback" src="/journey-infinity.webp" alt="" aria-hidden="true"
+      width={833} height={833} unoptimized preload />
+  );
+}
 
 export default function LandingExperience() {
   const root = useRef<HTMLDivElement>(null);
@@ -49,8 +57,12 @@ export default function LandingExperience() {
   const track = useRef<HTMLDivElement>(null);
   const galleryTrigger = useRef<ScrollTrigger | null>(null);
   const sculptureMotion = useRef<JourneyMotion>({ scroll: 0, arrival: 1, resolve: 0 });
-  const aeroplaneRef = useRef<HTMLDivElement>(null);
-  const { shouldAnimate } = useMotionPreferences();
+  const [sceneReady, setSceneReady] = useState(false);
+  const { shouldAnimate, reducedMotion } = useMotionPreferences();
+  const handleSceneReady = useCallback(() => {
+    setSceneReady(true);
+    art.current?.dispatchEvent(new Event("journey-sculpture-ready"));
+  }, []);
   useArrivalSequence(root, art, sculptureMotion, shouldAnimate);
 
   // Pinned mode drives the track with a scrubbed transform, so keyboard users
@@ -112,6 +124,12 @@ export default function LandingExperience() {
     };
   }, [setGalleryKeyboardMode]);
 
+  useEffect(() => {
+    const element = art.current;
+    const unavailable = () => setSceneReady(false);
+    element?.addEventListener("journey-sculpture-unavailable", unavailable);
+    return () => element?.removeEventListener("journey-sculpture-unavailable", unavailable);
+  }, []);
 
   useGSAP((_context, contextSafe) => {
     if (!shouldAnimate) return;
@@ -262,53 +280,6 @@ export default function LandingExperience() {
       ScrollTrigger.refresh();
     });
     document.fonts.ready.then(() => typeReady?.());
-
-    // Aeroplane travels along the route path. Desktop: cursor drives it.
-    // Mobile (no hover): scroll through the world-opening drives it. It is
-    // clamped to [0,1] so it never leaves the idea section.
-    const moveAeroplane = (progress: number) => {
-      const plane = aeroplaneRef.current;
-      const pathEl = root.current?.querySelector<SVGPathElement>("#world-route-path");
-      if (!plane || !pathEl) return;
-      const len = pathEl.getTotalLength();
-      const pt = pathEl.getPointAtLength(Math.max(0, Math.min(1, progress)) * len);
-      const ctm = pathEl.getScreenCTM();
-      if (!ctm) return;
-      const screen = pt.matrixTransform(ctm);
-      const parent = plane.offsetParent as HTMLElement | null;
-      if (!parent) return;
-      const prect = parent.getBoundingClientRect();
-      const px = screen.x - prect.left - plane.offsetWidth / 2;
-      const py = screen.y - prect.top - plane.offsetHeight / 2;
-      plane.style.transform = `translate3d(${px}px, ${py}px, 0)`;
-    };
-
-    const isHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    if (isHover) {
-      const onMove = (event: MouseEvent) => {
-        const worldOpening = root.current?.querySelector<HTMLElement>(".world-opening");
-        if (!worldOpening) return;
-        const rect = worldOpening.getBoundingClientRect();
-        const p = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-        moveAeroplane(p);
-      };
-      window.addEventListener("mousemove", onMove);
-      magnets.push(() => window.removeEventListener("mousemove", onMove));
-      // Place it at the start until the first move.
-      requestAnimationFrame(() => moveAeroplane(0));
-    } else {
-      const proxy = { p: 0 };
-      const tween = gsap.to(proxy, {
-        p: 1, ease: "none",
-        scrollTrigger: {
-          trigger: ".world-opening", start: "top top", end: "bottom bottom",
-          scrub: 0.28, invalidateOnRefresh: true,
-        },
-        onUpdate: () => moveAeroplane(proxy.p),
-      });
-      magnets.push(() => tween.kill());
-    }
-
     return () => {
       active = false;
       media.revert();
@@ -336,14 +307,11 @@ export default function LandingExperience() {
           <span className="title-line"><span className="line-inner world-word">world<span className="world-period">.</span></span></span>
           <span className="sr-only"> A clearer next step.</span>
         </h1>
-        <div className="hero-art" ref={art}>
+        <div className={`hero-art ${sceneReady && !reducedMotion ? "scene-is-ready" : ""}`} ref={art}>
           <div className="hero-art-scroll">
             <div className="orbital orbital-one" /><div className="orbital orbital-two" />
-            <div className="aeroplane" ref={aeroplaneRef} aria-hidden="true">
-              <svg viewBox="0 0 64 64" width="64" height="64">
-                <path d="M4 32 L60 10 L40 32 L60 54 L30 40 Z" fill="var(--color-acid)" />
-              </svg>
-            </div>
+            <SculptureFallback />
+            {!reducedMotion && <JourneySculpture paused={!shouldAnimate} motion={sculptureMotion} onReady={handleSceneReady} />}
           </div>
           <span className="art-annotation"><span /> Infinite possibilities.<br />One very personal journey.</span>
           <span className="art-coordinate eyebrow">THE FUTURE IS<br />A WORK IN BECOMING.</span>
@@ -359,11 +327,11 @@ export default function LandingExperience() {
       <section className="manifesto section-pad" id="vision" aria-labelledby="vision-title">
         <div className="section-label eyebrow" data-reveal><span>01 / THE IDEA</span><span>GOING PLACES STARTS HERE</span></div>
         <div className="manifesto-grid">
-          <div><h2 className="manifesto-statement" id="vision-title"><span className="mask-line"><span className="manifesto-word">A hundred deadlines.</span></span><span className="mask-line"><span className="manifesto-word">One clear order.</span></span><span className="mask-line"><span className="manifesto-word serif">Your next move.</span></span></h2></div>
-          <div className="manifesto-copy" data-reveal><span className="small-cross" aria-hidden="true">↗</span><p>Every date is counted back from your intake, sourced and labelled.<br />One plan. One next step.</p><a href="#plan" className="text-link">See a possibility become a plan. <Arrow diagonal /></a></div>
+          <div><h2 className="manifesto-statement" id="vision-title"><span className="mask-line"><span className="manifesto-word">Big plans.</span></span><span className="mask-line"><span className="manifesto-word">Too many tabs.</span></span><span className="mask-line"><span className="manifesto-word serif">Let’s change that.</span></span></h2></div>
+          <div className="manifesto-copy" data-reveal><span className="small-cross" aria-hidden="true">↗</span><p>Less searching in circles.<br />More knowing what comes next.</p><a href="#plan" className="text-link">See a possibility become a plan. <Arrow diagonal /></a></div>
         </div>
       </section>
-      <svg className="world-route" viewBox="0 0 1440 560" preserveAspectRatio="none" fill="none" aria-hidden="true"><path id="world-route-path" className="world-route-ink" d="M1050 20C1260 240 90 120 90 420L90 560" pathLength="1" /><circle cx="90" cy="555" r="5" /></svg>
+      <svg className="world-route" viewBox="0 0 1440 560" preserveAspectRatio="none" fill="none" aria-hidden="true"><path className="world-route-ink" d="M1050 20C1260 240 90 120 90 420L90 560" pathLength="1" /><circle cx="90" cy="555" r="5" /></svg>
       </div>
 
       <PlanStory />
