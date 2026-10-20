@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import PageTransition from "@/components/ui/PageTransition";
 import { buildPlan, type Plan } from "@/lib/engine/plan";
-import { DEFAULT_PROFILE } from "@/lib/engine/profile";
+import { DEFAULT_PROFILE } from "@/lib/engine/defaults";
 import "./steps.css";
 import StepsScreen from "./steps-screen";
 
