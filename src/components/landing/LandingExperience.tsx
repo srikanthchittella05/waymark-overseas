@@ -57,6 +57,7 @@ export default function LandingExperience() {
   const track = useRef<HTMLDivElement>(null);
   const galleryTrigger = useRef<ScrollTrigger | null>(null);
   const sculptureMotion = useRef<JourneyMotion>({ scroll: 0, arrival: 1, resolve: 0 });
+  const aeroplaneRef = useRef<HTMLDivElement>(null);
   const [sceneReady, setSceneReady] = useState(false);
   const { shouldAnimate, reducedMotion } = useMotionPreferences();
   const handleSceneReady = useCallback(() => {
@@ -280,6 +281,52 @@ export default function LandingExperience() {
       ScrollTrigger.refresh();
     });
     document.fonts.ready.then(() => typeReady?.());
+
+    // Aeroplane (idea section only) travels along the route path. Desktop:
+    // cursor drives it. Mobile (no hover): scroll through the world-opening
+    // drives it. Clamped to [0,1] so it stops at the end of the idea section.
+    const moveAeroplane = (progress: number) => {
+      const plane = aeroplaneRef.current;
+      const pathEl = root.current?.querySelector<SVGPathElement>("#world-route-path");
+      if (!plane || !pathEl) return;
+      const len = pathEl.getTotalLength();
+      const pt = pathEl.getPointAtLength(Math.max(0, Math.min(1, progress)) * len);
+      const ctm = pathEl.getScreenCTM();
+      if (!ctm) return;
+      const screen = pt.matrixTransform(ctm);
+      const parent = plane.offsetParent as HTMLElement | null;
+      if (!parent) return;
+      const prect = parent.getBoundingClientRect();
+      const px = screen.x - prect.left - plane.offsetWidth / 2;
+      const py = screen.y - prect.top - plane.offsetHeight / 2;
+      plane.style.transform = `translate3d(${px}px, ${py}px, 0)`;
+    };
+
+    const isHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (isHover) {
+      const onMove = (event: MouseEvent) => {
+        const worldOpening = root.current?.querySelector<HTMLElement>(".world-opening");
+        if (!worldOpening) return;
+        const rect = worldOpening.getBoundingClientRect();
+        const p = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+        moveAeroplane(p);
+      };
+      window.addEventListener("mousemove", onMove);
+      magnets.push(() => window.removeEventListener("mousemove", onMove));
+      requestAnimationFrame(() => moveAeroplane(0));
+    } else {
+      const proxy = { p: 0 };
+      const tween = gsap.to(proxy, {
+        p: 1, ease: "none",
+        scrollTrigger: {
+          trigger: ".world-opening", start: "top top", end: "bottom bottom",
+          scrub: 0.28, invalidateOnRefresh: true,
+        },
+        onUpdate: () => moveAeroplane(proxy.p),
+      });
+      magnets.push(() => tween.kill());
+    }
+
     return () => {
       active = false;
       media.revert();
@@ -331,7 +378,12 @@ export default function LandingExperience() {
           <div className="manifesto-copy" data-reveal><span className="small-cross" aria-hidden="true">↗</span><p>Less searching in circles.<br />More knowing what comes next.</p><a href="#plan" className="text-link">See a possibility become a plan. <Arrow diagonal /></a></div>
         </div>
       </section>
-      <svg className="world-route" viewBox="0 0 1440 560" preserveAspectRatio="none" fill="none" aria-hidden="true"><path className="world-route-ink" d="M1050 20C1260 240 90 120 90 420L90 560" pathLength="1" /><circle cx="90" cy="555" r="5" /></svg>
+      <svg className="world-route" viewBox="0 0 1440 560" preserveAspectRatio="none" fill="none" aria-hidden="true"><path id="world-route-path" className="world-route-ink" d="M1050 20C1260 240 90 120 90 420L90 560" pathLength="1" /><circle cx="90" cy="555" r="5" /></svg>
+      <div className="aeroplane" ref={aeroplaneRef} aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="48" height="48">
+          <path d="M4 32 L60 10 L40 32 L60 54 L30 40 Z" fill="var(--color-acid)" />
+        </svg>
+      </div>
       </div>
 
       <PlanStory />
