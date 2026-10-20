@@ -144,7 +144,10 @@ quieter mode, including live preference changes. There is no in-page pause butto
 - **Entry:** a forest aperture opens around the actual satin-ribbon infinity as it
   turns into the hero position. Approximately 2.5 seconds of overlapping choreography;
   the material gets at most a 1-second readiness window. A 4.5-second watchdog and any
-  input release it. Deep links, browser-back, repeats and reduced motion bypass it.
+  input release it. **Every fresh document is a fresh entrance:** a reload always
+  replays the whole reveal, from the opening state, and always begins at the top of
+  the page rather than at the position the browser remembers. Deep links, browser-back
+  and reduced motion bypass it.
 - **One visual thread:** on larger screens the same mesh travels from hero to manifesto,
   opens into an orbit, then contracts as an evidence-backed dated route takes over.
   Touch layouts keep unfolding and masked typography with native, non-pinned scrolling.
