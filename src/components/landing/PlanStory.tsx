@@ -10,6 +10,7 @@ import {
   buildPlan, CONFIDENCE_LABELS, countryOptions, getCountry,
   type PlanStep, type Profile,
 } from "@/lib/engine/plan";
+import { formatPlanDate } from "@/lib/format-date";
 import "./plan-story.css";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -51,12 +52,6 @@ function refreshPinLayout() {
     pendingLayoutRefresh = 0;
     ScrollTrigger.sort();
     ScrollTrigger.refresh();
-  });
-}
-
-function dateLabel(iso: string) {
-  return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
   });
 }
 
@@ -266,7 +261,7 @@ export default function PlanStory() {
         <div className="ps-stage" data-state={BEATS[beat].key} id={`${id}-panel`}
           role="region" aria-labelledby={`${id}-beat-${beat}`}>
           <div className="ps-stage-top">
-            <p className="ps-eyebrow">Sample snapshot · <time dateTime={SAMPLE_DATE}>{dateLabel(SAMPLE_DATE)}</time></p>
+            <p className="ps-eyebrow">Sample snapshot · <time dateTime={SAMPLE_DATE}>{formatPlanDate(SAMPLE_DATE)}</time></p>
             <p className="ps-stage-caption" role="status">{BEATS[beat].caption}</p>
           </div>
           <div className="ps-stage-grid">
@@ -287,7 +282,7 @@ export default function PlanStory() {
                   </select>
                 </label>
               </div>
-              <p className="ps-start"><span>Sample intake start</span><time dateTime={plan.intake.startDate}>{dateLabel(plan.intake.startDate)}</time></p>
+              <p className="ps-start"><span>Sample intake start</span><time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time></p>
             </div>
 
             <div className="ps-timeline" inert={shouldAnimate && canPin && pinFits && beat === 0}>
@@ -301,7 +296,7 @@ export default function PlanStory() {
                 <ol className="ps-ledger">
                   {ledger.map((step) => (
                     <li key={step.id} data-next={step.id === next?.id}>
-                      <div className="ps-date"><time dateTime={step.dueDate}>{dateLabel(step.dueDate)}</time>
+                      <div className="ps-date"><time dateTime={step.dueDate}>{formatPlanDate(step.dueDate)}</time>
                         <span>{Math.abs(step.offsetDays)}d {step.offsetDays < 0 ? "after" : "before"} start</span></div>
                       <div className="ps-entry"><p className="ps-entry-title">{step.title}</p><Source step={step} /></div>
                     </li>
@@ -315,7 +310,7 @@ export default function PlanStory() {
             <span className="ps-next-wash" aria-hidden="true" />
             <div className="ps-next-copy"><p className="ps-eyebrow">One next action{next.urgency === "overdue" ? " · catch up" : " · start here"}</p>
               <h3>{next.title}</h3><p className="ps-next-task">{next.summary}</p></div>
-            <div className="ps-next-evidence"><p className="ps-next-date">Planning target: <time dateTime={next.dueDate}>{dateLabel(next.dueDate)}</time></p><Source step={next} /></div>
+            <div className="ps-next-evidence"><p className="ps-next-date">Planning target: <time dateTime={next.dueDate}>{formatPlanDate(next.dueDate)}</time></p><Source step={next} /></div>
           </div>}
           <p className="ps-caveat">Dates = sample intake start − planning offsets, not published deadlines. Source confidence is not date certainty. Confirm with your school.</p>
         </div>
