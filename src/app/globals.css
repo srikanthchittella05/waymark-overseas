@@ -44,7 +44,7 @@
   --rule-strong: color-mix(in srgb, currentColor 30%, transparent);
   --muted: color-mix(in srgb, var(--color-ink) 66%, transparent);
   --pad-x: clamp(1.25rem, 4.2vw, 4.75rem);
-  --pad-y: clamp(3rem, 7vw, 7rem);
+  --pad-y: clamp(2.5rem, 6vw, 5.5rem);
   --header-h: 5rem;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 

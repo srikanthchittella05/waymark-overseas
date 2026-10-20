@@ -330,7 +330,6 @@ export default function LandingExperience() {
           <div><h2 className="manifesto-statement" id="vision-title"><span className="mask-line"><span className="manifesto-word">Big plans.</span></span><span className="mask-line"><span className="manifesto-word">Too many tabs.</span></span><span className="mask-line"><span className="manifesto-word serif">Let’s change that.</span></span></h2></div>
           <div className="manifesto-copy" data-reveal><span className="small-cross" aria-hidden="true">↗</span><p>Less searching in circles.<br />More knowing what comes next.</p><a href="#plan" className="text-link">See a possibility become a plan. <Arrow diagonal /></a></div>
         </div>
-        <div className="world-resolution eyebrow"><span>INFINITE POSSIBILITIES.</span><span>ONE WAY FORWARD. ↓</span></div>
       </section>
       <svg className="world-route" viewBox="0 0 1440 560" preserveAspectRatio="none" fill="none" aria-hidden="true"><path className="world-route-ink" d="M1050 20C1260 240 90 120 90 420L90 560" pathLength="1" /><circle cx="90" cy="555" r="5" /></svg>
       </div>
@@ -343,7 +342,7 @@ export default function LandingExperience() {
         <div className="journey-views">{PRODUCT_VIEWS.map((view, index) => <Link className="journey-view" href={view.href} key={view.href}>
           <span className="journey-view-index eyebrow">0{index + 1}</span>
           <div className="journey-view-title"><p className="eyebrow">{view.name}</p><h3>{view.promise}</h3></div>
-          <div className="journey-view-copy"><p>{view.copy}</p><span className="eyebrow">{view.detail}</span></div>
+          <div className="journey-view-copy"><p>{view.copy}</p></div>
           <span className="journey-view-arrow" aria-hidden="true"><Arrow diagonal /></span>
         </Link>)}</div>
         <p className="journey-local">Your target and ticks stay in this browser. No account, cross-device sync, or application submission.</p>
@@ -353,17 +352,17 @@ export default function LandingExperience() {
         <div className="destinations-heading section-pad"><div className="section-label eyebrow"><span>03 / CHOOSE YOUR HORIZON</span><span>SEVEN COUNTRIES. YOUR OWN WAY.</span></div><div className="destinations-intro"><h2 id="destinations-title">Same you.<br /><span className="serif">New horizons.</span></h2><div><p>Every one of these has a dated plan<br />behind it — and every date says where it came from.</p><span className="eyebrow gallery-hint"><span className="desktop-hint">KEEP SCROLLING TO EXPLORE</span><span className="touch-hint">SWIPE TO EXPLORE</span> <span aria-hidden="true">→</span></span></div></div></div>
         <div className="destination-viewport" ref={gallery} tabIndex={0} role="group" aria-label="Destination inspiration. Focus this gallery, then use the arrow keys, Home or End to explore sideways." onKeyDown={galleryKeys} onFocus={() => setGalleryKeyboardMode(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setGalleryKeyboardMode(false); }}>
           <div className="destination-track" ref={track}>
-            {DESTINATIONS.map((destination, index) => (
+            {DESTINATIONS.slice(0, 4).map((destination, index) => (
               <Link href={`/path?country=${destination.code}`} className="destination-card" key={destination.code}><Image src={destination.image} alt={destination.alt} fill unoptimized sizes="(max-width: 899px) 82vw, 34vw" loading="lazy" /><div className="destination-shade" /><div className="destination-meta eyebrow"><span>{destination.coords}</span><span>0{index + 1} / 0{DESTINATIONS.length}</span></div><div className="destination-copy"><span className="eyebrow">{countryName(destination.code)}</span><h3>{destination.city}</h3><div><p>{destination.line}</p><span className="destination-arrow" aria-hidden="true"><Arrow diagonal /></span></div></div></Link>
             ))}
           </div>
         </div>
-        <div className="destination-footnote section-pad"><span>Destination inspiration, not a programme directory.</span><Link className="text-link" href="/path">Choose my destination <Arrow diagonal /></Link></div>
+        <div className="destination-footnote section-pad"><span>Destination inspiration, not a programme directory. {DESTINATIONS.length - 4} more destinations on the path page.</span><Link className="text-link" href="/path">Choose my destination <Arrow diagonal /></Link></div>
       </section>
 
       <section className="closing-section section-pad" aria-labelledby="closing-title">
         <div className="section-label eyebrow" data-reveal><span>THE NEXT CHAPTER IS YOURS.</span><span>LET’S GIVE IT A LITTLE DIRECTION. ↗</span></div>
-        <div className="closing-main"><div><h2 id="closing-title"><span className="mask-line"><span className="closing-line">You don’t need</span></span><span className="mask-line"><span className="closing-line">every answer.</span></span><span className="mask-line"><span className="closing-line serif">Just a next step.</span></span></h2></div><Link className="closing-orb" href="/path" data-magnetic><span>Build<br />my route</span><Arrow diagonal /><span className="sr-only">: choose your destination and intake</span></Link></div>
+        <div className="closing-main"><Link className="closing-orb" href="/path" data-magnetic><span>Build<br />my route</span><Arrow diagonal /><span className="sr-only">: choose your destination and intake</span></Link></div>
         <div className="closing-caption"><p>No account. Your plan stays in this browser.<br />Four answers. A clearer way forward.</p><Link href="/today" className="text-link">See a finished plan <Arrow diagonal /></Link></div>
         <footer className="landing-footer"><div className="footer-top"><Link href="/" className="footer-wordmark" aria-label="Waymark home">waymark<span>.</span></Link><BrandMark className="footer-mark" /></div><div className="footer-bottom"><span>© 2026 Waymark. Every step, marked.</span><nav aria-label="Footer navigation"><Link href="/route">The Route ↗</Link><Link href="/steps">The Steps ↗</Link><a href="#vision">Back to the idea ↑</a></nav><span>MADE FOR WHAT’S NEXT.</span></div></footer>
       </section>
