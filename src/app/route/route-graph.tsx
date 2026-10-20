@@ -22,6 +22,8 @@ import {
 } from "@/lib/engine/plan";
 import { usePlan, usePlanActions, useProfile } from "@/lib/engine/profile";
 import { formatPlanDate } from "@/lib/format-date";
+import GuideProvider from "@/components/guide/GuideProvider";
+import GuideLinks from "@/components/guide/GuideLinks";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
 
 /*
@@ -428,522 +430,526 @@ export default function RouteGraph({
   };
 
   return (
-    <div className="route-screen" ref={screenRef} data-motion={shouldAnimate ? "on" : "off"}>
-      <header className="route-hero">
-        <h1>
-          <span className="rt-line">
-            <span ref={(el) => void (lineRefs.current[0] = el)}>Every deadline,</span>
-          </span>
-          <span className="rt-line">
-            <span ref={(el) => void (lineRefs.current[1] = el)}>
-              counted back from <span className="serif">departure</span>.
+  <GuideProvider steps={plan.steps}>
+      <div className="route-screen" ref={screenRef} data-motion={shouldAnimate ? "on" : "off"}>
+        <header className="route-hero">
+          <h1>
+            <span className="rt-line">
+              <span ref={(el) => void (lineRefs.current[0] = el)}>Every deadline,</span>
             </span>
-          </span>
-        </h1>
-
-        {/* One context line. "Change target" lives here, quiet. */}
-        <p className="rt-context">
-          {plan.country.name} · {plan.intake.label} · course starts{" "}
-          <time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time> ·{" "}
-          <Link className="rt-underline rt-target" href="/path">
-            Change target <ArrowRight />
-          </Link>
-        </p>
-
-        {/*
-          One number, then one demoted row of small text. The count of days is
-          the axis the whole graph is drawn against, so it is the one thing on
-          this screen that orients everything else.
-        */}
-        <p className="rt-figure">
-          <span className="rt-figure-number">{Math.abs(daysToStart)}</span>
-          <span className="rt-figure-unit">
-            days {daysToStart >= 0 ? "until you start" : "since you started"}
-          </span>
-        </p>
-
-        <p className="rt-micro">
-          <span>
-            <strong>{plan.counts.total}</strong> dated milestones
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            <strong>{plan.counts.verified}</strong> of {plan.counts.total} verified — an
-            official source states the rule, figure or date
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            {plan.country.name} admission is{" "}
-            {plan.country.admission === "rolling" ? "rolling" : "fixed"} —{" "}
-            {plan.country.admission === "rolling"
-              ? "earlier is better, but selective programmes inside it still publish one late deadline"
-              : "one deadline closes the round"}
-          </span>
-        </p>
-      </header>
-
-      <section className="route-section" aria-labelledby="rt-graph">
-        <div className="rt-section-head">
-          <h2 id="rt-graph">The graph</h2>
-          {/* The one honest caveat this drawing needs: the axis is ordered, not measured. */}
-          <p>Milestones in date order. The axis is ordered, not to scale — each row states its own date.</p>
-        </div>
-
-        {/* Glyph + word only: every row already prints its own status beside the shape. */}
-        <ul className="route-legend">
-          <li>
-            <StatusGlyph status="done" />
-            <span className="rt-legend-key">Done</span>
-          </li>
-          <li>
-            <StatusGlyph status="now" />
-            <span className="rt-legend-key">Now</span>
-          </li>
-          <li>
-            <StatusGlyph status="next" />
-            <span className="rt-legend-key">Next</span>
-          </li>
-          <li>
-            <StatusGlyph status="later" />
-            <span className="rt-legend-key">Later</span>
-          </li>
-          <li>
-            <StatusGlyph status="risk" />
-            <span className="rt-legend-key">At risk</span>
-          </li>
-          <li>
-            <TickMark />
-            <span className="rt-legend-key">{HARD_LABEL}</span>
-          </li>
-        </ul>
-
-        <div className="route-graph-wrap">
-          <div className="route-ruler" aria-hidden="true">
-            <span className="rt-ruler-mark" />
-            <span className="rt-ruler-body">Milestone</span>
-            <span className="rt-ruler-track" ref={rulerRef}>
-              <span className="rt-ruler-first">
-                {firstDue ? formatPlanDate(firstDue.dueDate) : ""}
-              </span>
-              <span
-                className="rt-ruler-last"
-                style={
-                  box
-                    ? { left: box.originX - box.trackLeft - 6 }
-                    : { right: 0 }
-                }
-              >
-                T · intake starts
+            <span className="rt-line">
+              <span ref={(el) => void (lineRefs.current[1] = el)}>
+                counted back from <span className="serif">departure</span>.
               </span>
             </span>
-            <span className="rt-ruler-date">Due</span>
-          </div>
+          </h1>
 
-          <div className="route-rows-wrap">
-            <svg
-              ref={edgesRef}
-              className="route-edges"
-              width={box?.w ?? 0}
-              height={box?.h ?? 0}
-              viewBox={box ? `0 0 ${box.w} ${box.h}` : "0 0 0 0"}
-              aria-hidden="true"
-              focusable="false"
-            >
-              <defs>
-                <marker
-                  id="rt-arrow"
-                  viewBox="0 0 6 6"
-                  refX="5.2"
-                  refY="3"
-                  markerWidth="5"
-                  markerHeight="5"
-                  orient="auto"
-                >
-                  <path d="M0 0.7 5.4 3 0 5.3Z" fill="var(--color-forest)" opacity="0.38" />
-                </marker>
-                <marker
-                  id="rt-arrow-live"
-                  viewBox="0 0 6 6"
-                  refX="5.2"
-                  refY="3"
-                  markerWidth="5"
-                  markerHeight="5"
-                  orient="auto"
-                >
-                  <path d="M0 0.7 5.4 3 0 5.3Z" fill="var(--color-forest)" />
-                </marker>
-                <marker
-                  id="rt-arrow-risk"
-                  viewBox="0 0 6 6"
-                  refX="5.2"
-                  refY="3"
-                  markerWidth="5"
-                  markerHeight="5"
-                  orient="auto"
-                >
-                  <path d="M0 0.7 5.4 3 0 5.3Z" fill="var(--color-signal)" />
-                </marker>
-              </defs>
-
-              {box ? (
-                <line
-                  className="rt-origin-rule"
-                  x1={box.originX - 0.5}
-                  y1={0}
-                  x2={box.originX - 0.5}
-                  y2={box.h}
-                />
-              ) : null}
-
-              {edges.map((edge) => {
-                const live = edge.from === relationshipId || edge.to === relationshipId;
-                const risk =
-                  (byId.get(edge.from)?.status === "risk" && !done[edge.from]) ||
-                  (byId.get(edge.to)?.status === "risk" && !done[edge.to]);
-                return (
-                  <path
-                    key={edge.key}
-                    className="rt-edge"
-                    d={edge.d}
-                    data-met={edge.met}
-                    data-live={live || undefined}
-                    data-risk={risk || undefined}
-                    markerEnd={`url(#${
-                      risk ? "rt-arrow-risk" : live ? "rt-arrow-live" : "rt-arrow"
-                    })`}
-                  />
-                );
-              })}
-
-              {/* A separate trace preserves the unmet edge's dashed semantics.
-                  It is decorative, finite, and keyed only to the relationship. */}
-              {edges
-                .filter((edge) => edge.from === relationshipId || edge.to === relationshipId)
-                .map((edge) => (
-                  <path
-                    key={`${relationshipId}-${edge.key}`}
-                    className="rt-edge-trace"
-                    d={edge.d}
-                    pathLength={1}
-                    data-risk={
-                      byId.get(edge.from)?.status === "risk" ||
-                      byId.get(edge.to)?.status === "risk" || undefined
-                    }
-                  />
-                ))}
-            </svg>
-
-            {/*
-              A radiogroup, not a set of disclosure buttons: these rows are not
-              expanders, they are one-of-many selection, and exactly one detail
-              panel below belongs to the selected one. `aria-controls` on a radio
-              is the documented way to name that panel, and the `li` wrappers are
-              presentational so the radios are owned by the group rather than by
-              a listitem sitting in the middle of it.
-            */}
-            <ol
-              className="route-rows"
-              ref={listRef}
-              role="radiogroup"
-              aria-label="Milestones in date order"
-              onKeyDown={onListKeyDown}
-            >
-              {ordered.map((step, index) => {
-                const isSelected = step.id === selectedId;
-                const open = step.blockers
-                  .map((id) => byId.get(id))
-                  .filter(isStep);
-                return (
-                  <li
-                    key={step.id}
-                    className="route-row"
-                    role="presentation"
-                    data-selected={isSelected || undefined}
-                  >
-                    <button
-                      type="button"
-                      role="radio"
-                      className="route-node"
-                      data-node={step.id}
-                      aria-checked={isSelected}
-                      aria-controls="route-detail"
-                      tabIndex={isSelected ? 0 : -1}
-                      onClick={() => selectNode(step.id)}
-                      onMouseEnter={() => setActive(step.id)}
-                      onMouseLeave={() => setActive(null)}
-                      onFocus={() => setActive(step.id)}
-                      onBlur={() => setActive(null)}
-                    >
-                      <span className="rt-mark">
-                        <StatusGlyph status={step.status} />
-                      </span>
-
-                      <span className="rt-body">
-                        <span className="rt-meta">
-                          <span className="rt-phase">{step.phase}</span>
-                          <span className="rt-chip" data-kind="status">
-                            {STATUS_WORD[step.status]}
-                          </span>
-                          {step.hardDeadline ? (
-                            <span className="rt-chip" data-kind="hard">
-                              {HARD_LABEL}
-                            </span>
-                          ) : null}
-                          {step.confidence !== "verified" ? (
-                            <span className="rt-chip" data-kind="conf">
-                              {CONFIDENCE_LABELS[step.confidence]}
-                            </span>
-                          ) : null}
-                        </span>
-                        <span className="rt-title">{step.title}</span>
-                        {open.length > 0 ? (
-                          <span className="rt-waits">
-                            {open.map((dep) => dep.title).join(" · ")}
-                          </span>
-                        ) : null}
-                      </span>
-
-                      <span className="rt-track" data-track aria-hidden="true">
-                        <span
-                          className="rt-tick"
-                          data-tick={step.id}
-                          data-status={step.status}
-                          data-hard={step.hardDeadline || undefined}
-                          style={tickStyle(((index + 0.5) / Math.max(total, 1)) * 100)}
-                        />
-                      </span>
-
-                      <span className="rt-date">
-                        <span className="rt-count">{countdown(step.offsetDays)}</span>
-                        <time dateTime={step.dueDate}>{formatPlanDate(step.dueDate)}</time>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-
-          <p className="rt-narrow-note">
-            On a narrow screen the connecting lines are dropped. Each row states what
-            it waits on.
+          {/* One context line. "Change target" lives here, quiet. */}
+          <p className="rt-context">
+            {plan.country.name} · {plan.intake.label} · course starts{" "}
+            <time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time> ·{" "}
+            <Link className="rt-underline rt-target" href="/path">
+              Change target <ArrowRight />
+            </Link>
           </p>
 
           {/*
-            The one live region on this screen, and it is deliberately tiny: the
-            selection changed, so name the milestone that changed. The detail
-            panel below is a plain labelled region — it is a thousand characters
-            and four headings, and re-reading all of it on every arrow keypress
-            is noise, not information.
+            One number, then one demoted row of small text. The count of days is
+            the axis the whole graph is drawn against, so it is the one thing on
+            this screen that orients everything else.
           */}
-          <p className="sr-only" role="status">
-            {announcement}
+          <p className="rt-figure">
+            <span className="rt-figure-number">{Math.abs(daysToStart)}</span>
+            <span className="rt-figure-unit">
+              days {daysToStart >= 0 ? "until you start" : "since you started"}
+            </span>
           </p>
 
-          {selected ? (
-            <div
-              className="route-detail"
-              id="route-detail"
-              role="region"
-              aria-label="Milestone detail"
-              tabIndex={-1}
-            >
-              {/* The selected text changes without remounting the action button. */}
-              <div className="rt-detail-head rt-selection-update" key={`${selected.id}-${selected.status}`}>
-                <p className="eyebrow">{selected.phase}</p>
-                <h3>{selected.title}</h3>
-                <p className="rt-detail-chips">
-                  <span className="rt-mark">
-                    <StatusGlyph status={selected.status} />
-                  </span>
-                  <span className="rt-chip" data-kind="status">
-                    {STATUS_WORD[selected.status]}
-                  </span>
-                  {selected.hardDeadline ? (
-                    <span className="rt-chip" data-kind="hard">
-                      {HARD_LABEL}
+          <p className="rt-micro">
+            <span>
+              <strong>{plan.counts.total}</strong> dated milestones
+            </span>
+            <span aria-hidden="true">·</span>
+            <span>
+              <strong>{plan.counts.verified}</strong> of {plan.counts.total} verified — an
+              official source states the rule, figure or date
+            </span>
+            <span aria-hidden="true">·</span>
+            <span>
+              {plan.country.name} admission is{" "}
+              {plan.country.admission === "rolling" ? "rolling" : "fixed"} —{" "}
+              {plan.country.admission === "rolling"
+                ? "earlier is better, but selective programmes inside it still publish one late deadline"
+                : "one deadline closes the round"}
+            </span>
+          </p>
+        </header>
+
+        <section className="route-section" aria-labelledby="rt-graph">
+          <div className="rt-section-head">
+            <h2 id="rt-graph">The graph</h2>
+            {/* The one honest caveat this drawing needs: the axis is ordered, not measured. */}
+            <p>Milestones in date order. The axis is ordered, not to scale — each row states its own date.</p>
+          </div>
+
+          {/* Glyph + word only: every row already prints its own status beside the shape. */}
+          <ul className="route-legend">
+            <li>
+              <StatusGlyph status="done" />
+              <span className="rt-legend-key">Done</span>
+            </li>
+            <li>
+              <StatusGlyph status="now" />
+              <span className="rt-legend-key">Now</span>
+            </li>
+            <li>
+              <StatusGlyph status="next" />
+              <span className="rt-legend-key">Next</span>
+            </li>
+            <li>
+              <StatusGlyph status="later" />
+              <span className="rt-legend-key">Later</span>
+            </li>
+            <li>
+              <StatusGlyph status="risk" />
+              <span className="rt-legend-key">At risk</span>
+            </li>
+            <li>
+              <TickMark />
+              <span className="rt-legend-key">{HARD_LABEL}</span>
+            </li>
+          </ul>
+
+          <div className="route-graph-wrap">
+            <div className="route-ruler" aria-hidden="true">
+              <span className="rt-ruler-mark" />
+              <span className="rt-ruler-body">Milestone</span>
+              <span className="rt-ruler-track" ref={rulerRef}>
+                <span className="rt-ruler-first">
+                  {firstDue ? formatPlanDate(firstDue.dueDate) : ""}
+                </span>
+                <span
+                  className="rt-ruler-last"
+                  style={
+                    box
+                      ? { left: box.originX - box.trackLeft - 6 }
+                      : { right: 0 }
+                  }
+                >
+                  T · intake starts
+                </span>
+              </span>
+              <span className="rt-ruler-date">Due</span>
+            </div>
+
+            <div className="route-rows-wrap">
+              <svg
+                ref={edgesRef}
+                className="route-edges"
+                width={box?.w ?? 0}
+                height={box?.h ?? 0}
+                viewBox={box ? `0 0 ${box.w} ${box.h}` : "0 0 0 0"}
+                aria-hidden="true"
+                focusable="false"
+              >
+                <defs>
+                  <marker
+                    id="rt-arrow"
+                    viewBox="0 0 6 6"
+                    refX="5.2"
+                    refY="3"
+                    markerWidth="5"
+                    markerHeight="5"
+                    orient="auto"
+                  >
+                    <path d="M0 0.7 5.4 3 0 5.3Z" fill="var(--color-forest)" opacity="0.38" />
+                  </marker>
+                  <marker
+                    id="rt-arrow-live"
+                    viewBox="0 0 6 6"
+                    refX="5.2"
+                    refY="3"
+                    markerWidth="5"
+                    markerHeight="5"
+                    orient="auto"
+                  >
+                    <path d="M0 0.7 5.4 3 0 5.3Z" fill="var(--color-forest)" />
+                  </marker>
+                  <marker
+                    id="rt-arrow-risk"
+                    viewBox="0 0 6 6"
+                    refX="5.2"
+                    refY="3"
+                    markerWidth="5"
+                    markerHeight="5"
+                    orient="auto"
+                  >
+                    <path d="M0 0.7 5.4 3 0 5.3Z" fill="var(--color-signal)" />
+                  </marker>
+                </defs>
+
+                {box ? (
+                  <line
+                    className="rt-origin-rule"
+                    x1={box.originX - 0.5}
+                    y1={0}
+                    x2={box.originX - 0.5}
+                    y2={box.h}
+                  />
+                ) : null}
+
+                {edges.map((edge) => {
+                  const live = edge.from === relationshipId || edge.to === relationshipId;
+                  const risk =
+                    (byId.get(edge.from)?.status === "risk" && !done[edge.from]) ||
+                    (byId.get(edge.to)?.status === "risk" && !done[edge.to]);
+                  return (
+                    <path
+                      key={edge.key}
+                      className="rt-edge"
+                      d={edge.d}
+                      data-met={edge.met}
+                      data-live={live || undefined}
+                      data-risk={risk || undefined}
+                      markerEnd={`url(#${
+                        risk ? "rt-arrow-risk" : live ? "rt-arrow-live" : "rt-arrow"
+                      })`}
+                    />
+                  );
+                })}
+
+                {/* A separate trace preserves the unmet edge's dashed semantics.
+                    It is decorative, finite, and keyed only to the relationship. */}
+                {edges
+                  .filter((edge) => edge.from === relationshipId || edge.to === relationshipId)
+                  .map((edge) => (
+                    <path
+                      key={`${relationshipId}-${edge.key}`}
+                      className="rt-edge-trace"
+                      d={edge.d}
+                      pathLength={1}
+                      data-risk={
+                        byId.get(edge.from)?.status === "risk" ||
+                        byId.get(edge.to)?.status === "risk" || undefined
+                      }
+                    />
+                  ))}
+              </svg>
+
+              {/*
+                A radiogroup, not a set of disclosure buttons: these rows are not
+                expanders, they are one-of-many selection, and exactly one detail
+                panel below belongs to the selected one. `aria-controls` on a radio
+                is the documented way to name that panel, and the `li` wrappers are
+                presentational so the radios are owned by the group rather than by
+                a listitem sitting in the middle of it.
+              */}
+              <ol
+                className="route-rows"
+                ref={listRef}
+                role="radiogroup"
+                aria-label="Milestones in date order"
+                onKeyDown={onListKeyDown}
+              >
+                {ordered.map((step, index) => {
+                  const isSelected = step.id === selectedId;
+                  const open = step.blockers
+                    .map((id) => byId.get(id))
+                    .filter(isStep);
+                  return (
+                    <li
+                      key={step.id}
+                      className="route-row"
+                      role="presentation"
+                      data-selected={isSelected || undefined}
+                    >
+                      <button
+                        type="button"
+                        role="radio"
+                        className="route-node"
+                        data-node={step.id}
+                        aria-checked={isSelected}
+                        aria-controls="route-detail"
+                        tabIndex={isSelected ? 0 : -1}
+                        onClick={() => selectNode(step.id)}
+                        onMouseEnter={() => setActive(step.id)}
+                        onMouseLeave={() => setActive(null)}
+                        onFocus={() => setActive(step.id)}
+                        onBlur={() => setActive(null)}
+                      >
+                        <span className="rt-mark">
+                          <StatusGlyph status={step.status} />
+                        </span>
+
+                        <span className="rt-body">
+                          <span className="rt-meta">
+                            <span className="rt-phase">{step.phase}</span>
+                            <span className="rt-chip" data-kind="status">
+                              {STATUS_WORD[step.status]}
+                            </span>
+                            {step.hardDeadline ? (
+                              <span className="rt-chip" data-kind="hard">
+                                {HARD_LABEL}
+                              </span>
+                            ) : null}
+                            {step.confidence !== "verified" ? (
+                              <span className="rt-chip" data-kind="conf">
+                                {CONFIDENCE_LABELS[step.confidence]}
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="rt-title">{step.title}</span>
+                          {open.length > 0 ? (
+                            <span className="rt-waits">
+                              {open.map((dep) => dep.title).join(" · ")}
+                            </span>
+                          ) : null}
+                        </span>
+
+                        <span className="rt-track" data-track aria-hidden="true">
+                          <span
+                            className="rt-tick"
+                            data-tick={step.id}
+                            data-status={step.status}
+                            data-hard={step.hardDeadline || undefined}
+                            style={tickStyle(((index + 0.5) / Math.max(total, 1)) * 100)}
+                          />
+                        </span>
+
+                        <span className="rt-date">
+                          <span className="rt-count">{countdown(step.offsetDays)}</span>
+                          <time dateTime={step.dueDate}>{formatPlanDate(step.dueDate)}</time>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+
+            <p className="rt-narrow-note">
+              On a narrow screen the connecting lines are dropped. Each row states what
+              it waits on.
+            </p>
+
+            {/*
+              The one live region on this screen, and it is deliberately tiny: the
+              selection changed, so name the milestone that changed. The detail
+              panel below is a plain labelled region — it is a thousand characters
+              and four headings, and re-reading all of it on every arrow keypress
+              is noise, not information.
+            */}
+            <p className="sr-only" role="status">
+              {announcement}
+            </p>
+
+            {selected ? (
+              <div
+                className="route-detail"
+                id="route-detail"
+                role="region"
+                aria-label="Milestone detail"
+                tabIndex={-1}
+              >
+                {/* The selected text changes without remounting the action button. */}
+                <div className="rt-detail-head rt-selection-update" key={`${selected.id}-${selected.status}`}>
+                  <p className="eyebrow">{selected.phase}</p>
+                  <h3>{selected.title}</h3>
+                  <p className="rt-detail-chips">
+                    <span className="rt-mark">
+                      <StatusGlyph status={selected.status} />
                     </span>
-                  ) : null}
-                  <span className="rt-chip" data-kind="conf">
-                    {CONFIDENCE_LABELS[selected.confidence]} date
-                  </span>
-                </p>
-                <p className="rt-detail-due">
-                  Due <strong>{formatPlanDate(selected.dueDate)}</strong> —{" "}
-                  <strong>{countdown(selected.offsetDays)}</strong>,{" "}
-                  {countdownWords(selected)}
-                  {selected.offsetDays < 0 ? ", after your course has started" : ""}.
-                </p>
-              </div>
-
-              <p className="rt-detail-summary">{selected.summary}</p>
-
-              {selected.hardDeadline ? <p className="rt-detail-note">{HARD_NOTE}</p> : null}
-
-              <div className="rt-detail-cols">
-                <div>
-                  <h4>What it involves</h4>
-                  <ul className="rt-task-list">
-                    {selected.tasks.map((task) => (
-                      <li key={task}>
-                        <span>{task}</span>
-                      </li>
-                    ))}
-                  </ul>
+                    <span className="rt-chip" data-kind="status">
+                      {STATUS_WORD[selected.status]}
+                    </span>
+                    {selected.hardDeadline ? (
+                      <span className="rt-chip" data-kind="hard">
+                        {HARD_LABEL}
+                      </span>
+                    ) : null}
+                    <span className="rt-chip" data-kind="conf">
+                      {CONFIDENCE_LABELS[selected.confidence]} date
+                    </span>
+                  </p>
+                  <p className="rt-detail-due">
+                    Due <strong>{formatPlanDate(selected.dueDate)}</strong> —{" "}
+                    <strong>{countdown(selected.offsetDays)}</strong>,{" "}
+                    {countdownWords(selected)}
+                    {selected.offsetDays < 0 ? ", after your course has started" : ""}.
+                  </p>
                 </div>
 
-                <div>
-                  <h4>Depends on</h4>
-                  {blockers.length > 0 ? (
-                    <div className="rt-deps">
-                      {blockers.map((dep) => (
-                        <button
-                          key={dep.id}
-                          type="button"
-                          className="rt-dep"
-                          data-met={Boolean(done[dep.id])}
-                          onClick={() => focusNode(dep.id)}
-                        >
-                          <span className="rt-dep-arrow" aria-hidden="true">
-                            ↳
-                          </span>
-                          <span>{dep.title}</span>
-                          <span className="rt-legend-key">
-                            {done[dep.id] ? "done" : "not done"}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="rt-none">Nothing — this one has no prerequisites.</p>
-                  )}
+                <p className="rt-detail-summary">{selected.summary}</p>
 
-                  <div className="rt-trust">
-                    <h4>Where this number comes from</h4>
-                    <p>
-                      <span className="rt-trust-level">
-                        {CONFIDENCE_LABELS[selected.confidence]}.
-                      </span>{" "}
-                      {CONFIDENCE_NOTE[selected.confidence]}
-                    </p>
-                    <a
-                      className="rt-trust-source"
-                      href={selected.source}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <span className="rt-trust-url">{selected.source}</span>
-                      <span className="rt-trust-newtab">
-                        <span className="rt-trust-arrow" aria-hidden="true">
-                          <ExternalArrow />
+                <GuideLinks milestoneId={selected.id} className="rt-detail-guides" />
+
+                {selected.hardDeadline ? <p className="rt-detail-note">{HARD_NOTE}</p> : null}
+
+                <div className="rt-detail-cols">
+                  <div>
+                    <h4>What it involves</h4>
+                    <ul className="rt-task-list">
+                      {selected.tasks.map((task) => (
+                        <li key={task}>
+                          <span>{task}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4>Depends on</h4>
+                    {blockers.length > 0 ? (
+                      <div className="rt-deps">
+                        {blockers.map((dep) => (
+                          <button
+                            key={dep.id}
+                            type="button"
+                            className="rt-dep"
+                            data-met={Boolean(done[dep.id])}
+                            onClick={() => focusNode(dep.id)}
+                          >
+                            <span className="rt-dep-arrow" aria-hidden="true">
+                              ↳
+                            </span>
+                            <span>{dep.title}</span>
+                            <span className="rt-legend-key">
+                              {done[dep.id] ? "done" : "not done"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="rt-none">Nothing — this one has no prerequisites.</p>
+                    )}
+
+                    <div className="rt-trust">
+                      <h4>Where this number comes from</h4>
+                      <p>
+                        <span className="rt-trust-level">
+                          {CONFIDENCE_LABELS[selected.confidence]}.
+                        </span>{" "}
+                        {CONFIDENCE_NOTE[selected.confidence]}
+                      </p>
+                      <a
+                        className="rt-trust-source"
+                        href={selected.source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span className="rt-trust-url">{selected.source}</span>
+                        <span className="rt-trust-newtab">
+                          <span className="rt-trust-arrow" aria-hidden="true">
+                            <ExternalArrow />
+                          </span>
+                          opens in a new tab
                         </span>
-                        opens in a new tab
-                      </span>
-                    </a>
+                      </a>
+                    </div>
                   </div>
                 </div>
+
+                <div className="rt-detail-actions">
+                  <button
+                    type="button"
+                    className="rt-button"
+                    onClick={() => toggleStep(selected.id)}
+                  >
+                    <span aria-hidden="true">
+                      <StatusGlyph status={done[selected.id] ? "later" : "done"} />
+                    </span>
+                    {done[selected.id] ? "Undo — mark this not done" : "Mark this done"}
+                  </button>
+                </div>
               </div>
-
-              <div className="rt-detail-actions">
-                <button
-                  type="button"
-                  className="rt-button"
-                  onClick={() => toggleStep(selected.id)}
-                >
-                  <span aria-hidden="true">
-                    <StatusGlyph status={done[selected.id] ? "later" : "done"} />
-                  </span>
-                  {done[selected.id] ? "Undo — mark this not done" : "Mark this done"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="route-empty">
-              Select any milestone above to see its summary, its tasks and the
-              official page its dates were checked against.
-            </p>
-          )}
-        </div>
-      </section>
-
-      <section className="route-section" aria-labelledby="rt-admission">
-        <div className="rt-section-head">
-          <h2 id="rt-admission">
-            {plan.country.name} admission, stated plainly
-          </h2>
-        </div>
-
-        <div className="route-admission">
-          <p className="rt-admission-flag">
-            <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-              {plan.country.admission === "rolling" ? (
-                <path
-                  d="M6 0.7c2.9 0 5.3 2.4 5.3 5.3S8.9 11.3 6 11.3 0.7 8.9 0.7 6 3.1 0.7 6 0.7Zm0 2.7a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2Z"
-                  fill="currentColor"
-                />
-              ) : (
-                <path
-                  d="M6 0.7c2.9 0 5.3 2.4 5.3 5.3S8.9 11.3 6 11.3 0.7 8.9 0.7 6 3.1 0.7 6 0.7Z"
-                  fill="currentColor"
-                />
-              )}
-            </svg>
-            {plan.country.admission === "rolling" ? "Rolling admission" : "Fixed admission"}
-          </p>
-
-          <div className="rt-admission-copy">
-            <h3>
-              {plan.country.admission === "rolling"
-                ? "Rolling — but not open-ended."
-                : "One deadline closes the round."}
-            </h3>
-            <p>
-              {plan.country.admission === "rolling"
-                ? "Places fill as applications arrive, so there is no date on which the door visibly closes — earlier really is better. Selective programmes inside a rolling system still publish one late deadline for their main intake, and that date is real."
-                : "Admissions close on a published date. Everything behind it is yours to control: documents, tests, references, funding, the visa appointment. Work back from the deadline itself, not from the start of term."}
-            </p>
-
-            <details className="rt-caveat">
-              <summary>
-                <span className="rt-caveat-plus" aria-hidden="true">
-                  +
-                </span>
-                Read the full {plan.country.name} caveat, in the researcher&rsquo;s words
-              </summary>
-              <p className="rt-caveat-body">
-                {plan.country.notes}
-                <span className="rt-caveat-source">
-                  Verified research window: October 2026.
-                </span>
+            ) : (
+              <p className="route-empty">
+                Select any milestone above to see its summary, its tasks and the
+                official page its dates were checked against.
               </p>
-            </details>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="route-section">
-        <div className="route-footnote">
-          <p className="eyebrow">Honesty</p>
-          <p>
-            <strong>
-              {plan.counts.verified} of {plan.counts.total} dates verified.
-            </strong>{" "}
-            The other {plan.counts.unverified} are a planning default, labelled on
-            their row and linked to the page they came from — read it before you
-            rely on it. Nothing is stored on a server; your plan lives in this
-            browser only.
-            {afterIntake.length > 0 ? (
-              <>
-                {" "}
-                {afterIntake.length === 1 ? "One milestone sits" : `${afterIntake.length} milestones sit`}{" "}
-                to the right of the intake line, because {afterIntake.length === 1 ? "it falls" : "they fall"}{" "}
-                after your course has already started.
-              </>
-            ) : null}
-          </p>
-        </div>
-      </section>
-    </div>
+        <section className="route-section" aria-labelledby="rt-admission">
+          <div className="rt-section-head">
+            <h2 id="rt-admission">
+              {plan.country.name} admission, stated plainly
+            </h2>
+          </div>
+
+          <div className="route-admission">
+            <p className="rt-admission-flag">
+              <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                {plan.country.admission === "rolling" ? (
+                  <path
+                    d="M6 0.7c2.9 0 5.3 2.4 5.3 5.3S8.9 11.3 6 11.3 0.7 8.9 0.7 6 3.1 0.7 6 0.7Zm0 2.7a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2Z"
+                    fill="currentColor"
+                  />
+                ) : (
+                  <path
+                    d="M6 0.7c2.9 0 5.3 2.4 5.3 5.3S8.9 11.3 6 11.3 0.7 8.9 0.7 6 3.1 0.7 6 0.7Z"
+                    fill="currentColor"
+                  />
+                )}
+              </svg>
+              {plan.country.admission === "rolling" ? "Rolling admission" : "Fixed admission"}
+            </p>
+
+            <div className="rt-admission-copy">
+              <h3>
+                {plan.country.admission === "rolling"
+                  ? "Rolling — but not open-ended."
+                  : "One deadline closes the round."}
+              </h3>
+              <p>
+                {plan.country.admission === "rolling"
+                  ? "Places fill as applications arrive, so there is no date on which the door visibly closes — earlier really is better. Selective programmes inside a rolling system still publish one late deadline for their main intake, and that date is real."
+                  : "Admissions close on a published date. Everything behind it is yours to control: documents, tests, references, funding, the visa appointment. Work back from the deadline itself, not from the start of term."}
+              </p>
+
+              <details className="rt-caveat">
+                <summary>
+                  <span className="rt-caveat-plus" aria-hidden="true">
+                    +
+                  </span>
+                  Read the full {plan.country.name} caveat, in the researcher&rsquo;s words
+                </summary>
+                <p className="rt-caveat-body">
+                  {plan.country.notes}
+                  <span className="rt-caveat-source">
+                    Verified research window: October 2026.
+                  </span>
+                </p>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <section className="route-section">
+          <div className="route-footnote">
+            <p className="eyebrow">Honesty</p>
+            <p>
+              <strong>
+                {plan.counts.verified} of {plan.counts.total} dates verified.
+              </strong>{" "}
+              The other {plan.counts.unverified} are a planning default, labelled on
+              their row and linked to the page they came from — read it before you
+              rely on it. Nothing is stored on a server; your plan lives in this
+              browser only.
+              {afterIntake.length > 0 ? (
+                <>
+                  {" "}
+                  {afterIntake.length === 1 ? "One milestone sits" : `${afterIntake.length} milestones sit`}{" "}
+                  to the right of the intake line, because {afterIntake.length === 1 ? "it falls" : "they fall"}{" "}
+                  after your course has already started.
+                </>
+              ) : null}
+            </p>
+          </div>
+        </section>
+      </div>
+  </GuideProvider>
   );
 }
 
