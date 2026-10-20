@@ -508,12 +508,21 @@ export default function PathForm({ initialTarget }: {
                   </p>
                 </div>
                 <div className="pa-actions">
-                  <button type="submit" className="pa-button" disabled={!dirty}>
-                    <span aria-hidden="true">
-                      <CheckMark />
-                    </span>
-                    {dirty ? "Confirm this route" : "Route already saved"}
-                  </button>
+                  {dirty ? (
+                    <button type="submit" className="pa-button">
+                      <span aria-hidden="true">
+                        <CheckMark />
+                      </span>
+                      Confirm this route
+                    </button>
+                  ) : (
+                    <Link href="/today" className="pa-button">
+                      <span aria-hidden="true">
+                        <ArrowRight />
+                      </span>
+                      See your plan
+                    </Link>
+                  )}
                   {dirty ? (
                     <button
                       type="button"
