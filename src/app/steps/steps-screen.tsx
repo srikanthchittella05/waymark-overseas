@@ -10,6 +10,7 @@ import { useMotionPreferences } from "@/components/providers/MotionProvider";
 import { usePlan, usePlanActions } from "@/lib/engine/profile";
 import { CONFIDENCE_LABELS, type Plan, type PlanStep } from "@/lib/engine/plan";
 import type { Confidence } from "@/lib/engine/country-cycles";
+import { formatPlanDate } from "@/lib/format-date";
 
 /*
  * /steps is the whole plan as a checklist: grouped by phase, every date derived
@@ -31,13 +32,6 @@ const BRAND_EASE = CustomEase.create("waymark-brand", "M0,0 C0.65,0.05 0,1 1,1")
 const REVEAL = 0.75;
 const SETTLE = 0.6;
 const STAGGER = 0.06;
-
-const DATE_FORMAT = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 const STATUS_LABELS: Record<PlanStep["status"], string> = {
   now: "Do now",
@@ -99,11 +93,6 @@ const EMPTY_COPY: Record<Filter, string> = {
   risk: "Nothing is past its date.",
   done: "Nothing ticked yet.",
 };
-
-function formatDate(iso: string): string {
-  const [year, month, day] = iso.split("-").map(Number);
-  return DATE_FORMAT.format(new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1)));
-}
 
 function countdown(step: PlanStep): string {
   const days = step.daysUntil;
@@ -351,7 +340,7 @@ function StepsBody({ plan }: { plan: Plan }) {
         {/* One context line. "Change target" lives here, quiet. */}
         <p className="steps-context">
           {plan.country.name} · {plan.intake.label} · dated back from{" "}
-          <time dateTime={plan.intake.startDate}>{formatDate(plan.intake.startDate)}</time> ·{" "}
+          <time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time> ·{" "}
           <Link className="steps-underline steps-target" href="/path">
             Change target <Arrow />
           </Link>
@@ -505,7 +494,7 @@ function StepsBody({ plan }: { plan: Plan }) {
                         <p className="steps-meta">
                           <span className="steps-meta-key">Due</span>
                           <span className="steps-meta-value">
-                            {formatDate(step.dueDate)}
+                            {formatPlanDate(step.dueDate)}
                             {step.hardDeadline ? (
                               <span className="steps-flag steps-flag-hard">hard deadline</span>
                             ) : null}

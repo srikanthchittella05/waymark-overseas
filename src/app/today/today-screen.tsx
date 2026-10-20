@@ -9,6 +9,7 @@ import { useGSAP } from "@gsap/react";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
 import { usePlan, usePlanActions } from "@/lib/engine/profile";
 import type { Plan, PlanStep } from "@/lib/engine/plan";
+import { formatPlanDate } from "@/lib/format-date";
 
 /*
  * /today answers exactly one question: what should I do next, and why now.
@@ -31,13 +32,6 @@ const REVEAL = 0.75;
 const SETTLE = 0.6;
 const STAGGER = 0.06;
 
-const DATE_FORMAT = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 const STATUS_WORDS: Record<PlanStep["status"], string> = {
   now: "Do now",
   next: "Next up",
@@ -45,11 +39,6 @@ const STATUS_WORDS: Record<PlanStep["status"], string> = {
   risk: "Past its date",
   done: "Done",
 };
-
-function formatDate(iso: string): string {
-  const [year, month, day] = iso.split("-").map(Number);
-  return DATE_FORMAT.format(new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1)));
-}
 
 /** "in 47 days" / "due today" / "12 days late" — the human form of daysUntil. */
 function countdown(step: PlanStep): string {
@@ -302,7 +291,7 @@ function TodayBody({ plan }: { plan: Plan }) {
         {/* One context line. Everything else the page can say, it says in the card. */}
         <p className="today-context">
           {plan.country.name} · {plan.intake.label} · counted back from{" "}
-          <time dateTime={plan.intake.startDate}>{formatDate(plan.intake.startDate)}</time> ·{" "}
+          <time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time> ·{" "}
           <Link className="today-underline today-target" href="/path">
             Change target <Arrow />
           </Link>
@@ -354,8 +343,8 @@ function TodayBody({ plan }: { plan: Plan }) {
             </p>
             <p className="today-clock-date">
               {hero.daysUntil === 0
-                ? `Due today · ${formatDate(hero.dueDate)}`
-                : `${countdown(hero)} · due ${formatDate(hero.dueDate)}`}
+                ? `Due today · ${formatPlanDate(hero.dueDate)}`
+                : `${countdown(hero)} · due ${formatPlanDate(hero.dueDate)}`}
               {hero.hardDeadline ? " · hard deadline, dated by the school or authority" : ""}
             </p>
           </div>
@@ -477,7 +466,7 @@ function TodayBody({ plan }: { plan: Plan }) {
               Blocked: {blocked.subject.title}
             </h2>
             <p className="today-blocked-copy">
-              Due {formatDate(blocked.subject.dueDate)} — {countdown(blocked.subject)}. It cannot
+              Due {formatPlanDate(blocked.subject.dueDate)} — {countdown(blocked.subject)}. It cannot
               start until the {countLabel(blocked.blockerIds.length, "step", "steps")} below{" "}
               {blocked.blockerIds.length === 1 ? "is" : "are"} settled.
             </p>
@@ -531,7 +520,7 @@ function TodayBody({ plan }: { plan: Plan }) {
                 </p>
                 <h3 className="today-risk-title">{step.title}</h3>
                 <p className="today-risk-date">
-                  Due {formatDate(step.dueDate)} · {Math.abs(step.daysUntil)}{" "}
+                  Due {formatPlanDate(step.dueDate)} · {Math.abs(step.daysUntil)}{" "}
                   {Math.abs(step.daysUntil) === 1 ? "day" : "days"} past
                 </p>
                 <button
