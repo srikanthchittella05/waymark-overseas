@@ -11,6 +11,8 @@ import {
   type PlanStep, type Profile,
 } from "@/lib/engine/plan";
 import { formatPlanDate } from "@/lib/format-date";
+import GuideProvider from "@/components/guide/GuideProvider";
+import GuideLinks from "@/components/guide/GuideLinks";
 import "./plan-story.css";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -59,7 +61,7 @@ function Source({ step }: { step: PlanStep }) {
   return (
     <p className="ps-source">
       <span className="ps-confidence">Confidence: {CONFIDENCE_LABELS[step.confidence]}</span>
-      <a href={step.source} title={step.source} aria-label={`View source for ${step.title}`}>View source <span aria-hidden="true">↗</span></a>
+      <a href={step.source} title={step.source} aria-label={`The official source for ${step.title}`}>The official source <span aria-hidden="true">↗</span></a>
     </p>
   );
 }
@@ -239,85 +241,87 @@ export default function PlanStory() {
   }
 
   return (
-    <section className="ps-story" id="plan" ref={root} aria-labelledby={`${id}-title`}>
-      <div className="ps-frame" ref={frame}>
-        <header className="ps-heading">
-          <div><p className="ps-eyebrow">02 / POSSIBILITY, MEET PLAN.</p><h2 id={`${id}-title`}>A plan to <em>match.</em></h2></div>
-          <p className="ps-intro">Scroll through the plan.<br />Or choose a chapter below.</p>
-        </header>
+  <GuideProvider steps={plan.steps}>
+      <section className="ps-story" id="plan" ref={root} aria-labelledby={`${id}-title`}>
+        <div className="ps-frame" ref={frame}>
+          <header className="ps-heading">
+            <div><p className="ps-eyebrow">02 / POSSIBILITY, MEET PLAN.</p><h2 id={`${id}-title`}>A plan to <em>match.</em></h2></div>
+            <p className="ps-intro">Scroll through the plan.<br />Or choose a chapter below.</p>
+          </header>
 
-        <div className="ps-beats" role="group" aria-label="Inspect the sample plan">
-          {BEATS.map((item, index) => (
-            <button className="ps-beat" type="button" key={item.key} id={`${id}-beat-${index}`}
-              aria-pressed={beat === index} aria-controls={`${id}-panel`} disabled={!ready}
-              onClick={() => inspect(index as Beat)}>
-              <span className="ps-beat-number" aria-hidden="true">0{index + 1}</span>
-              <span><span className="ps-beat-title">{item.title}</span><span className="ps-beat-copy">{item.copy}</span></span>
-              <span className="ps-beat-arrow" aria-hidden="true">↘</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="ps-stage" data-state={BEATS[beat].key} id={`${id}-panel`}
-          role="region" aria-labelledby={`${id}-beat-${beat}`}>
-          <div className="ps-stage-top">
-            <p className="ps-eyebrow">Sample snapshot · <time dateTime={SAMPLE_DATE}>{formatPlanDate(SAMPLE_DATE)}</time></p>
-            <p className="ps-stage-caption" role="status">{BEATS[beat].caption}</p>
-          </div>
-          <div className="ps-stage-grid">
-            <div className="ps-target">
-              <h3 className="ps-eyebrow">The starting point</h3>
-              <div className="ps-pickers">
-                <label className="ps-field"><span>Destination</span>
-                  <select value={profile.countryCode} disabled={!ready} onChange={(event) => chooseCountry(event.target.value)}>
-                    {COUNTRIES.map((country) => <option value={country.code} key={country.code}>{country.name}</option>)}
-                  </select>
-                </label>
-                <label className="ps-field"><span>Intake</span>
-                  <select value={profile.intakeId} disabled={!ready} onChange={(event) => {
-                    const intakeId = event.currentTarget.value;
-                    inspect(0); setProfile((current) => ({ ...current, intakeId }));
-                  }}>
-                    {plan.country.intakes.map((intake) => <option value={intake.id} key={intake.id}>{intake.label}</option>)}
-                  </select>
-                </label>
-              </div>
-              <p className="ps-start"><span>Sample intake start</span><time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time></p>
-            </div>
-
-            <div className="ps-timeline" inert={shouldAnimate && canPin && pinFits && beat === 0}>
-              <div className="ps-ledger-heading"><h3>Dates, counted back</h3><span>{ledger.length} of {plan.counts.total} milestones</span></div>
-              <div className="ps-ledger-body">
-                <svg className="ps-route-art" viewBox="0 0 64 240" preserveAspectRatio="none" fill="none" aria-hidden="true" focusable="false">
-                  <path className="ps-route-track" d={ORDERED} vectorEffect="non-scaling-stroke" />
-                  <path className="ps-route-ink" d={ORDERED} pathLength="1" vectorEffect="non-scaling-stroke" />
-                  {[20, 100, 180].map((cy, index) => <circle key={cy} cx="28" cy={cy} r={index === 0 ? 5 : 3} vectorEffect="non-scaling-stroke" />)}
-                </svg>
-                <ol className="ps-ledger">
-                  {ledger.map((step) => (
-                    <li key={step.id} data-next={step.id === next?.id}>
-                      <div className="ps-date"><time dateTime={step.dueDate}>{formatPlanDate(step.dueDate)}</time>
-                        <span>{Math.abs(step.offsetDays)}d {step.offsetDays < 0 ? "after" : "before"} start</span></div>
-                      <div className="ps-entry"><p className="ps-entry-title">{step.title}</p><Source step={step} /></div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
+          <div className="ps-beats" role="group" aria-label="Inspect the sample plan">
+            {BEATS.map((item, index) => (
+              <button className="ps-beat" type="button" key={item.key} id={`${id}-beat-${index}`}
+                aria-pressed={beat === index} aria-controls={`${id}-panel`} disabled={!ready}
+                onClick={() => inspect(index as Beat)}>
+                <span className="ps-beat-number" aria-hidden="true">0{index + 1}</span>
+                <span><span className="ps-beat-title">{item.title}</span><span className="ps-beat-copy">{item.copy}</span></span>
+                <span className="ps-beat-arrow" aria-hidden="true">↘</span>
+              </button>
+            ))}
           </div>
 
-          {next && <div className="ps-next" inert={shouldAnimate && canPin && pinFits && beat !== 2}>
-            <span className="ps-next-wash" aria-hidden="true" />
-            <div className="ps-next-copy"><p className="ps-eyebrow">One next action{next.urgency === "overdue" ? " · catch up" : " · start here"}</p>
-              <h3>{next.title}</h3><p className="ps-next-task">{next.summary}</p></div>
-            <div className="ps-next-evidence"><p className="ps-next-date">Planning target: <time dateTime={next.dueDate}>{formatPlanDate(next.dueDate)}</time></p><Source step={next} /></div>
-          </div>}
-          <p className="ps-caveat">Dates = sample intake start − planning offsets, not published deadlines. Source confidence is not date certainty. Confirm with your school.</p>
-        </div>
+          <div className="ps-stage" data-state={BEATS[beat].key} id={`${id}-panel`}
+            role="region" aria-labelledby={`${id}-beat-${beat}`}>
+            <div className="ps-stage-top">
+              <p className="ps-eyebrow">Sample snapshot · <time dateTime={SAMPLE_DATE}>{formatPlanDate(SAMPLE_DATE)}</time></p>
+              <p className="ps-stage-caption" role="status">{BEATS[beat].caption}</p>
+            </div>
+            <div className="ps-stage-grid">
+              <div className="ps-target">
+                <h3 className="ps-eyebrow">The starting point</h3>
+                <div className="ps-pickers">
+                  <label className="ps-field"><span>Destination</span>
+                    <select value={profile.countryCode} disabled={!ready} onChange={(event) => chooseCountry(event.target.value)}>
+                      {COUNTRIES.map((country) => <option value={country.code} key={country.code}>{country.name}</option>)}
+                    </select>
+                  </label>
+                  <label className="ps-field"><span>Intake</span>
+                    <select value={profile.intakeId} disabled={!ready} onChange={(event) => {
+                      const intakeId = event.currentTarget.value;
+                      inspect(0); setProfile((current) => ({ ...current, intakeId }));
+                    }}>
+                      {plan.country.intakes.map((intake) => <option value={intake.id} key={intake.id}>{intake.label}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <p className="ps-start"><span>Sample intake start</span><time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time></p>
+              </div>
 
-        <div className="ps-footer"><Link className="ps-route-link" href="/route">Explore your route <span aria-hidden="true">↗</span></Link>
-          <Link className="ps-cta" href={`/path?country=${profile.countryCode}&intake=${profile.intakeId}`}>Build my route <span aria-hidden="true">↗</span></Link></div>
-      </div>
-    </section>
+              <div className="ps-timeline" inert={shouldAnimate && canPin && pinFits && beat === 0}>
+                <div className="ps-ledger-heading"><h3>Dates, counted back</h3><span>{ledger.length} of {plan.counts.total} milestones</span></div>
+                <div className="ps-ledger-body">
+                  <svg className="ps-route-art" viewBox="0 0 64 240" preserveAspectRatio="none" fill="none" aria-hidden="true" focusable="false">
+                    <path className="ps-route-track" d={ORDERED} vectorEffect="non-scaling-stroke" />
+                    <path className="ps-route-ink" d={ORDERED} pathLength="1" vectorEffect="non-scaling-stroke" />
+                    {[20, 100, 180].map((cy, index) => <circle key={cy} cx="28" cy={cy} r={index === 0 ? 5 : 3} vectorEffect="non-scaling-stroke" />)}
+                  </svg>
+                  <ol className="ps-ledger">
+                    {ledger.map((step) => (
+                      <li key={step.id} data-next={step.id === next?.id}>
+                        <div className="ps-date"><time dateTime={step.dueDate}>{formatPlanDate(step.dueDate)}</time>
+                          <span>{Math.abs(step.offsetDays)}d {step.offsetDays < 0 ? "after" : "before"} start</span></div>
+                        <div className="ps-entry"><p className="ps-entry-title">{step.title}</p><Source step={step} /><GuideLinks milestoneId={step.id} className="ps-entry-guides" /></div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            {next && <div className="ps-next" inert={shouldAnimate && canPin && pinFits && beat !== 2}>
+              <span className="ps-next-wash" aria-hidden="true" />
+              <div className="ps-next-copy"><p className="ps-eyebrow">One next action{next.urgency === "overdue" ? " · catch up" : " · start here"}</p>
+                <h3>{next.title}</h3><p className="ps-next-task">{next.summary}</p></div>
+              <div className="ps-next-evidence"><p className="ps-next-date">Planning target: <time dateTime={next.dueDate}>{formatPlanDate(next.dueDate)}</time></p><Source step={next} /></div>
+            </div>}
+            <p className="ps-caveat">Dates = sample intake start − planning offsets, not published deadlines. Source confidence is not date certainty. Confirm with your school.</p>
+          </div>
+
+          <div className="ps-footer"><Link className="ps-route-link" href="/route">See the whole dated route <span aria-hidden="true">↗</span></Link>
+            <Link className="ps-cta" href={`/path?country=${profile.countryCode}&intake=${profile.intakeId}`}>Build my route <span aria-hidden="true">↗</span></Link></div>
+        </div>
+      </section>
+  </GuideProvider>
   );
 }

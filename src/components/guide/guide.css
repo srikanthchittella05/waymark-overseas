@@ -1,0 +1,531 @@
+/*
+ * The dossier.
+ *
+ * A sheet over the page, so the ladder stays scannable. One column, a
+ * generous measure, and the same editorial language as the rest of the site:
+ * numbered eyebrows, hairline rules, and the acid green used only for the
+ * things a student can act on.
+ */
+
+.guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.4rem;
+  margin-top: 0.7rem;
+}
+
+/*
+ * A named link, not a generic button. The label is the promise, so it is set
+ * like the site's own underlined links and the arrow is a quiet addition.
+ *
+ * The colour is inherited rather than fixed: these links sit on both the
+ * porcelain field and the deep pine bands, and a fixed ink colour drops to
+ * 3.0:1 on pine. Inheriting means the contrast is whatever the surrounding
+ * text already passes.
+ */
+.guide-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 42%, transparent);
+  transition: border-color 0.22s var(--ease-out), opacity 0.22s var(--ease-out);
+}
+.guide-link:hover,
+.guide-link:focus-visible {
+  border-bottom-color: currentColor;
+}
+.guide-link-arrow {
+  color: inherit;
+  opacity: 0.62;
+  font-size: 0.95em;
+  transform: translateY(-0.02em);
+  transition: opacity 0.22s var(--ease-out);
+}
+.guide-link:hover .guide-link-arrow,
+.guide-link:focus-visible .guide-link-arrow {
+  opacity: 1;
+}
+
+/* ── The sheet ─────────────────────────────────────────────────────────── */
+
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+.guide-scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-forest-deep) 62%, transparent);
+  backdrop-filter: blur(3px);
+  animation: guide-scrim-in var(--dur) var(--ease-out) both;
+}
+
+.guide-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(48rem, 100%);
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--color-ink);
+  box-shadow: -1px 0 0 color-mix(in srgb, var(--color-forest) 14%, transparent);
+  animation: guide-panel-in var(--dur-slow) var(--ease-brand) both;
+}
+
+/* The wipe echoes the arrival aperture: the world opens from one side. */
+@keyframes guide-panel-in {
+  from {
+    transform: translateX(2.5rem);
+    opacity: 0;
+    clip-path: inset(0 0 0 100%);
+  }
+  to {
+    transform: none;
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes guide-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.guide-head {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 1.6rem clamp(1.25rem, 4vw, 3rem) 1.15rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-forest) 12%, transparent);
+}
+
+.guide-eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.guide-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.6vw, 1.95rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  max-width: 34ch;
+}
+
+.guide-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+}
+.guide-meta a {
+  color: var(--color-ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.guide-confidence {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+}
+.guide-confidence-verified { color: #2c6b4f; }
+.guide-confidence-typical { color: #7a6320; }
+.guide-confidence-estimate { color: #8a4a2f; }
+
+.guide-close {
+  position: absolute;
+  top: 1.35rem;
+  right: clamp(1.25rem, 4vw, 3rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-forest) 22%, transparent);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+}
+.guide-close:hover {
+  border-color: var(--color-acid);
+  color: var(--color-ink-soft);
+}
+
+.guide-body-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1.75rem clamp(1.25rem, 4vw, 3rem) 4rem;
+  overscroll-behavior: contain;
+}
+
+/* ── The content ───────────────────────────────────────────────────────── */
+
+.guide-intro {
+  margin: 0 0 2rem;
+  font-size: 1.0625rem;
+  line-height: 1.62;
+  color: var(--color-ink);
+  max-width: 62ch;
+}
+
+.guide-section {
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-forest) 12%, transparent);
+  animation: guide-rise var(--dur) var(--ease-brand) both;
+}
+.guide-section:first-of-type { border-top: 0; }
+.guide-section[data-guide-active="true"] { scroll-margin-top: 1rem; }
+
+@keyframes guide-rise {
+  from { opacity: 0; transform: translateY(0.75rem); }
+  to { opacity: 1; transform: none; }
+}
+
+.guide-section-title {
+  margin: 0 0 0.85rem;
+  font-size: clamp(1.1rem, 1.9vw, 1.35rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  max-width: 40ch;
+}
+
+.guide-subhead {
+  margin: 1.35rem 0 0.55rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  font-weight: 500;
+}
+
+.guide-body {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.68;
+  color: var(--color-ink);
+  max-width: 64ch;
+}
+
+.guide-points,
+.guide-tasks,
+.guide-topics,
+.guide-roadmap-focus {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  font-size: 0.9375rem;
+  line-height: 1.62;
+  max-width: 64ch;
+}
+.guide-points li,
+.guide-tasks li,
+.guide-topics li,
+.guide-roadmap-focus li { margin-bottom: 0.4rem; }
+
+.guide-tip {
+  margin: 0.9rem 0 0;
+  padding-left: 0.85rem;
+  border-left: 2px solid var(--color-acid);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-ink);
+  max-width: 62ch;
+}
+
+.guide-mark {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-ink-soft);
+  vertical-align: middle;
+}
+
+/* ── Exam cards ────────────────────────────────────────────────────────── */
+
+.guide-exams {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+.guide-exam {
+  padding: 0.95rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--color-forest) 14%, transparent);
+  border-radius: 0.75rem;
+  background: var(--color-halfwhite);
+}
+.guide-exam-not { background: color-mix(in srgb, var(--color-halfwhite) 60%, transparent); }
+.guide-exam-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.guide-exam-row {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 0.5rem;
+  margin: 0 0 0.3rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.guide-exam-key {
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-top: 0.15rem;
+}
+.guide-exam-value { color: var(--color-ink); }
+.guide-exam-note {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+  max-width: 60ch;
+}
+.guide-exam-source {
+  margin: 0.6rem 0 0;
+  font-size: 0.8125rem;
+}
+.guide-exam-source a {
+  color: var(--color-ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.guide-flag {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-forest) 22%, transparent);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+.guide-flag-free { border-color: color-mix(in srgb, #2c6b4f 45%, transparent); color: #2c6b4f; }
+.guide-flag-off { border-color: color-mix(in srgb, var(--color-signal) 40%, transparent); color: var(--color-signal); }
+
+/* ── Sub-sections ──────────────────────────────────────────────────────── */
+
+.guide-subsections { margin: 0 0 1rem; }
+.guide-subsection {
+  border-top: 1px solid color-mix(in srgb, var(--color-forest) 12%, transparent);
+}
+.guide-subsection:last-child { border-bottom: 1px solid color-mix(in srgb, var(--color-forest) 12%, transparent); }
+.guide-subsection summary {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+.guide-subsection summary::-webkit-details-marker { display: none; }
+.guide-subsection summary::after {
+  content: "→";
+  color: var(--color-acid);
+}
+.guide-subsection summary {
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+}
+.guide-subsection[open] summary::after { content: "↓"; }
+.guide-subsection-title { font-size: 0.9375rem; font-weight: 500; }
+.guide-subsection-what {
+  grid-column: 1;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+  max-width: 58ch;
+}
+.guide-subsection-body { padding-bottom: 1rem; }
+
+/* ── The roadmap ───────────────────────────────────────────────────────── */
+
+.guide-roadmap {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0 0 0 1.35rem;
+  border-left: 1px solid color-mix(in srgb, var(--color-forest) 20%, transparent);
+}
+.guide-roadmap-stage {
+  position: relative;
+  padding: 0 0 1.5rem 0.5rem;
+}
+.guide-roadmap-stage::before {
+  content: "";
+  position: absolute;
+  left: -1.35rem;
+  top: 0.4rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-ink-soft);
+  background: var(--paper);
+}
+.guide-roadmap-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+.guide-roadmap-title {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.guide-roadmap-goal {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+.guide-roadmap-hours {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-ink-soft);
+}
+.guide-roadmap-check {
+  margin: 0.6rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+}
+
+/* ── Resources ─────────────────────────────────────────────────────────── */
+
+.guide-resources { margin: 0 0 1rem; }
+.guide-resource-list { list-style: none; margin: 0; padding: 0; }
+.guide-resource {
+  padding: 0.7rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-forest) 10%, transparent);
+}
+.guide-resource:first-child { border-top: 0; }
+.guide-resource-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.guide-resource-title a {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in srgb, var(--color-acid) 70%, transparent);
+  text-decoration-thickness: 1.5px;
+}
+.guide-resource-host {
+  margin-left: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-ink-soft);
+}
+.guide-resource-why {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+  max-width: 62ch;
+}
+.guide-resource-verified {
+  margin: 0.3rem 0 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-ink-soft) 70%, transparent);
+}
+
+/* ── The callout ───────────────────────────────────────────────────────── */
+
+.guide-callout {
+  margin: 1.25rem 0 0;
+  padding: 0.95rem 1.15rem;
+  border-left: 2px solid var(--color-acid);
+  background: color-mix(in srgb, var(--color-halfwhite) 80%, transparent);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+.guide-callout-watch { border-left-color: var(--color-signal); }
+.guide-callout-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.guide-callout-body {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-ink-soft);
+  max-width: 60ch;
+}
+
+.guide-loading {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: var(--color-ink-soft);
+}
+
+/* ── Small screens ─────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .guide-panel { width: 100%; }
+  .guide-exam-row { grid-template-columns: 1fr; gap: 0.1rem; }
+  .guide-exam-key { padding-top: 0.4rem; }
+}
+
+/*
+ * Motion follows the operating system, exactly as it does everywhere else in
+ * the product. Nothing here moves for a student who has asked it not to.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .guide-scrim,
+  .guide-panel,
+  .guide-section { animation: none; }
+  .guide-panel { transform: none; opacity: 1; clip-path: none; }
+  .guide-section { transform: none; opacity: 1; }
+}
+.guide-overlay[data-guide-motion="off"] .guide-scrim,
+.guide-overlay[data-guide-motion="off"] .guide-panel,
+.guide-overlay[data-guide-motion="off"] .guide-section { animation: none; }
+.guide-overlay[data-guide-motion="off"] .guide-panel {
+  transform: none;
+  opacity: 1;
+  clip-path: none;
+}

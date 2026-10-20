@@ -11,6 +11,8 @@ import { usePlan, usePlanActions } from "@/lib/engine/profile";
 import { CONFIDENCE_LABELS, type Plan, type PlanStep } from "@/lib/engine/plan";
 import type { Confidence } from "@/lib/engine/country-cycles";
 import { formatPlanDate } from "@/lib/format-date";
+import GuideProvider from "@/components/guide/GuideProvider";
+import GuideLinks from "@/components/guide/GuideLinks";
 
 /*
  * /steps is the whole plan as a checklist: grouped by phase, every date derived
@@ -322,292 +324,296 @@ function StepsBody({ plan }: { plan: Plan }) {
   });
 
   return (
-    <>
-      <p className="sr-only" role="status">
-        {message}
-      </p>
-
-      <section className="steps-head" aria-labelledby="steps-title">
-        <h1 className="steps-title" id="steps-title">
-          <span className="steps-mask">
-            <span className="steps-mask-inner">Every step,</span>
-          </span>
-          <span className="steps-mask">
-            <span className="steps-mask-inner serif">dated backwards.</span>
-          </span>
-        </h1>
-
-        {/* One context line. "Change target" lives here, quiet. */}
-        <p className="steps-context">
-          {plan.country.name} · {plan.intake.label} · dated back from{" "}
-          <time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time> ·{" "}
-          <Link className="steps-underline steps-target" href="/path">
-            Change target <Arrow />
-          </Link>
+  <GuideProvider steps={plan.steps}>
+      <>
+        <p className="sr-only" role="status">
+          {message}
         </p>
 
-        {/*
-          One number, then one demoted row of small text. Four equal tiles gave
-          every fact the same weight, so nothing led. The facts that are not
-          progress survive as text, not as a second row of boxes.
-        */}
-        <p className="steps-figure">
-          <span className="steps-figure-number">{openCount}</span>
-          <span className="steps-figure-unit">open of {plan.counts.total} milestones</span>
-        </p>
+        <section className="steps-head" aria-labelledby="steps-title">
+          <h1 className="steps-title" id="steps-title">
+            <span className="steps-mask">
+              <span className="steps-mask-inner">Every step,</span>
+            </span>
+            <span className="steps-mask">
+              <span className="steps-mask-inner serif">dated backwards.</span>
+            </span>
+          </h1>
 
-        <p className="steps-micro">
-          {/*
-            "0 done" reports nothing a student can act on, so it only appears
-            once there is progress to report. The filter counts carry the rest.
-          */}
-          {plan.counts.done > 0 ? (
-            <>
-              <span>
-                <strong>{plan.counts.done}</strong> done
-              </span>
-              <span aria-hidden="true">·</span>
-            </>
-          ) : null}
-          <span data-signal={plan.counts.risk > 0 || undefined}>
-            <strong>{plan.counts.risk}</strong> past {plan.counts.risk === 1 ? "its date" : "their date"}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            <strong>{plan.counts.verified}</strong> of {plan.counts.total} verified — an official
-            source states the rule, figure or date
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>
-            {plan.country.name} admission is {plan.country.admission === "rolling" ? "rolling" : "fixed"}
-            {" — "}
-            {plan.country.admission === "rolling"
-              ? "earlier is better, but the selective programmes inside it still publish one late deadline for their main intake"
-              : "one deadline closes the round"}
-          </span>
-        </p>
-      </section>
-
-      <section className="steps-filterbar" aria-labelledby="filter-title" data-reveal>
-        <h2 className="sr-only" id="filter-title">
-          Filter milestones
-        </h2>
-        {/* One segmented object, not six pills. */}
-        <div className="steps-filters" role="group" aria-label="Filter milestones by status">
-          {FILTERS.map((entry) => {
-            const active = filter === entry.key;
-            return (
-              <button
-                key={entry.key}
-                type="button"
-                className="steps-filter"
-                aria-pressed={active}
-                data-active={active}
-                data-kind={entry.key}
-                ref={active ? activeFilter : undefined}
-                onClick={() => setFilter(entry.key)}
-              >
-                <span className="steps-filter-label">{entry.label}</span>
-                <span className="steps-filter-count" key={`${active}-${filterCounts[entry.key]}`}>
-                  {filterCounts[entry.key]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* The result surface stays mounted: filtering keeps surviving disclosures
-          open and leaves keyboard focus on the chosen segment. */}
-      <div className="steps-results">
-        {phases.length === 0 ? (
-          <p className="steps-empty">
-            {filter === "all" ? "This intake has no milestones." : EMPTY_COPY[filter]}
+          {/* One context line. "Change target" lives here, quiet. */}
+          <p className="steps-context">
+            {plan.country.name} · {plan.intake.label} · dated back from{" "}
+            <time dateTime={plan.intake.startDate}>{formatPlanDate(plan.intake.startDate)}</time> ·{" "}
+            <Link className="steps-underline steps-target" href="/path">
+              Change target <Arrow />
+            </Link>
           </p>
-        ) : (
-          phases.map((group) => (
-            <section className="steps-phase" key={group.phase} aria-labelledby={`phase-${slug(group.phase)}`}>
-              <div className="steps-phase-head">
-                <h2
-                  className="steps-phase-title"
-                  id={`phase-${slug(group.phase)}`}
-                  tabIndex={-1}
-                  ref={(element) => {
-                    if (element) phaseHeadings.current.set(group.phase, element);
-                    else phaseHeadings.current.delete(group.phase);
-                  }}
+
+          {/*
+            One number, then one demoted row of small text. Four equal tiles gave
+            every fact the same weight, so nothing led. The facts that are not
+            progress survive as text, not as a second row of boxes.
+          */}
+          <p className="steps-figure">
+            <span className="steps-figure-number">{openCount}</span>
+            <span className="steps-figure-unit">open of {plan.counts.total} milestones</span>
+          </p>
+
+          <p className="steps-micro">
+            {/*
+              "0 done" reports nothing a student can act on, so it only appears
+              once there is progress to report. The filter counts carry the rest.
+            */}
+            {plan.counts.done > 0 ? (
+              <>
+                <span>
+                  <strong>{plan.counts.done}</strong> done
+                </span>
+                <span aria-hidden="true">·</span>
+              </>
+            ) : null}
+            <span data-signal={plan.counts.risk > 0 || undefined}>
+              <strong>{plan.counts.risk}</strong> past {plan.counts.risk === 1 ? "its date" : "their date"}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span>
+              <strong>{plan.counts.verified}</strong> of {plan.counts.total} verified — an official
+              source states the rule, figure or date
+            </span>
+            <span aria-hidden="true">·</span>
+            <span>
+              {plan.country.name} admission is {plan.country.admission === "rolling" ? "rolling" : "fixed"}
+              {" — "}
+              {plan.country.admission === "rolling"
+                ? "earlier is better, but the selective programmes inside it still publish one late deadline for their main intake"
+                : "one deadline closes the round"}
+            </span>
+          </p>
+        </section>
+
+        <section className="steps-filterbar" aria-labelledby="filter-title" data-reveal>
+          <h2 className="sr-only" id="filter-title">
+            Filter milestones
+          </h2>
+          {/* One segmented object, not six pills. */}
+          <div className="steps-filters" role="group" aria-label="Filter milestones by status">
+            {FILTERS.map((entry) => {
+              const active = filter === entry.key;
+              return (
+                <button
+                  key={entry.key}
+                  type="button"
+                  className="steps-filter"
+                  aria-pressed={active}
+                  data-active={active}
+                  data-kind={entry.key}
+                  ref={active ? activeFilter : undefined}
+                  onClick={() => setFilter(entry.key)}
                 >
-                  {group.phase}
-                </h2>
-                <p className="steps-phase-count">
-                  {group.done}/{group.total} done
-                </p>
-              </div>
+                  <span className="steps-filter-label">{entry.label}</span>
+                  <span className="steps-filter-count" key={`${active}-${filterCounts[entry.key]}`}>
+                    {filterCounts[entry.key]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-              <ul className="steps-list">
-                {group.steps.map((step) => {
-                  const isDone = step.status === "done";
-                  const isLead = step.id === leadId;
-                  const waitingOn = step.blockers
-                    .map((id) => stepById.get(id))
-                    .filter((dependency): dependency is PlanStep => Boolean(dependency));
-                  const opens = dependents.get(step.id) ?? [];
-                  return (
-                    <li
-                      className="steps-row"
-                      key={step.id}
-                      data-status={step.status}
-                      data-done={isDone}
-                      data-lead={isLead || undefined}
-                    >
-                      <div className="steps-row-head">
-                        <input
-                          className="steps-box"
-                          type="checkbox"
-                          id={`step-${step.id}`}
-                          checked={isDone}
-                          aria-describedby={`step-meta-${step.id}`}
-                          onChange={() => {
-                            /*
-                             * A tick can remove this row from the current filter,
-                             * so the phase it belonged to takes the focus back.
-                             */
-                            pendingFocus.current = group.phase;
-                            toggleStep(step.id);
-                            setMessage(isDone ? `Reopened ${step.title}.` : `Marked ${step.title} done.`);
-                          }}
-                        />
-                        <h3 className="steps-row-title">
-                          {isLead ? <span className="steps-row-lead">Do this next</span> : null}
-                          <label htmlFor={`step-${step.id}`}>{step.title}</label>
-                        </h3>
-                        <p className="steps-row-state">
-                          <span className="steps-mark" data-status={step.status} aria-hidden="true" />
-                          <span className="steps-mark-word">{STATUS_LABELS[step.status]}</span>
-                          <span className="steps-mark-when">{countdown(step)}</span>
-                        </p>
-                      </div>
+        {/* The result surface stays mounted: filtering keeps surviving disclosures
+            open and leaves keyboard focus on the chosen segment. */}
+        <div className="steps-results">
+          {phases.length === 0 ? (
+            <p className="steps-empty">
+              {filter === "all" ? "This intake has no milestones." : EMPTY_COPY[filter]}
+            </p>
+          ) : (
+            phases.map((group) => (
+              <section className="steps-phase" key={group.phase} aria-labelledby={`phase-${slug(group.phase)}`}>
+                <div className="steps-phase-head">
+                  <h2
+                    className="steps-phase-title"
+                    id={`phase-${slug(group.phase)}`}
+                    tabIndex={-1}
+                    ref={(element) => {
+                      if (element) phaseHeadings.current.set(group.phase, element);
+                      else phaseHeadings.current.delete(group.phase);
+                    }}
+                  >
+                    {group.phase}
+                  </h2>
+                  <p className="steps-phase-count">
+                    {group.done}/{group.total} done
+                  </p>
+                </div>
 
-                      <p className="steps-row-summary">{step.summary}</p>
+                <ul className="steps-list">
+                  {group.steps.map((step) => {
+                    const isDone = step.status === "done";
+                    const isLead = step.id === leadId;
+                    const waitingOn = step.blockers
+                      .map((id) => stepById.get(id))
+                      .filter((dependency): dependency is PlanStep => Boolean(dependency));
+                    const opens = dependents.get(step.id) ?? [];
+                    return (
+                      <li
+                        className="steps-row"
+                        key={step.id}
+                        data-status={step.status}
+                        data-done={isDone}
+                        data-lead={isLead || undefined}
+                      >
+                        <div className="steps-row-head">
+                          <input
+                            className="steps-box"
+                            type="checkbox"
+                            id={`step-${step.id}`}
+                            checked={isDone}
+                            aria-describedby={`step-meta-${step.id}`}
+                            onChange={() => {
+                              /*
+                               * A tick can remove this row from the current filter,
+                               * so the phase it belonged to takes the focus back.
+                               */
+                              pendingFocus.current = group.phase;
+                              toggleStep(step.id);
+                              setMessage(isDone ? `Reopened ${step.title}.` : `Marked ${step.title} done.`);
+                            }}
+                          />
+                          <h3 className="steps-row-title">
+                            {isLead ? <span className="steps-row-lead">Do this next</span> : null}
+                            <label htmlFor={`step-${step.id}`}>{step.title}</label>
+                          </h3>
+                          <p className="steps-row-state">
+                            <span className="steps-mark" data-status={step.status} aria-hidden="true" />
+                            <span className="steps-mark-word">{STATUS_LABELS[step.status]}</span>
+                            <span className="steps-mark-when">{countdown(step)}</span>
+                          </p>
+                        </div>
 
-                      <div className="steps-row-meta" id={`step-meta-${step.id}`}>
-                        <p className="steps-meta">
-                          <span className="steps-meta-key">Due</span>
-                          <span className="steps-meta-value">
-                            {formatPlanDate(step.dueDate)}
-                            {step.hardDeadline ? (
-                              <span className="steps-flag steps-flag-hard">hard deadline</span>
-                            ) : null}
-                          </span>
-                        </p>
-                        <p className="steps-meta">
-                          <span className="steps-meta-key">Source</span>
-                          <span className="steps-meta-value">
-                            <span className={`steps-confidence steps-confidence-${step.confidence}`}>
-                              {CONFIDENCE_LABELS[step.confidence]}
-                            </span>
-                            <a
-                              className="steps-underline"
-                              href={step.source}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title={step.source}
-                              aria-label={`${CONFIDENCE_LABELS[step.confidence]} source at ${host(step.source)}: ${step.source} — opens in a new tab`}
-                            >
-                              {host(step.source)} <Arrow />
-                            </a>
-                          </span>
-                        </p>
-                        <p className="steps-confidence-note">{CONFIDENCE_NOTES[step.confidence]}</p>
-                        {step.hardDeadline ? (
-                          <p className="steps-confidence-note">{HARD_DEADLINE_NOTE}</p>
-                        ) : null}
-                        {waitingOn.length > 0 ? (
-                          <p className="steps-waiting">
-                            <span className="steps-mark" data-status="later" aria-hidden="true" />
-                            <span>
-                              <strong className="steps-waiting-key">
-                                Waiting on{waitingOn.length === 1 ? "" : ` ${waitingOn.length}`}:
-                              </strong>{" "}
-                              {waitingOn.map((dependency, index) => (
-                                <span key={dependency.id}>
-                                  {index > 0 ? ", " : ""}
-                                  {dependency.title}
-                                </span>
-                              ))}
-                              {". "}
-                              {opens.length > 0
-                                ? `You can still tick it — that marks it settled and opens ${opens.length} ${opens.length === 1 ? "milestone" : "milestones"} that wait on it.`
-                                : "You can still tick it — that marks it settled even though the work above is not finished."}
+                        <p className="steps-row-summary">{step.summary}</p>
+
+                        <GuideLinks milestoneId={step.id} className="steps-row-guides" />
+
+                        <div className="steps-row-meta" id={`step-meta-${step.id}`}>
+                          <p className="steps-meta">
+                            <span className="steps-meta-key">Due</span>
+                            <span className="steps-meta-value">
+                              {formatPlanDate(step.dueDate)}
+                              {step.hardDeadline ? (
+                                <span className="steps-flag steps-flag-hard">hard deadline</span>
+                              ) : null}
                             </span>
                           </p>
-                        ) : null}
-                        {waitingOn.length === 0 && opens.length > 0 ? (
-                          <p className="steps-waiting">
-                            <span className="steps-mark" data-status="next" aria-hidden="true" />
-                            <span>
-                              {opens.length} {opens.length === 1 ? "milestone is" : "milestones are"}{" "}
-                              dated from this one:{" "}
-                              {opens.map((open, index) => (
-                                <span key={open.id}>
-                                  {index > 0 ? ", " : ""}
-                                  {open.title}
-                                </span>
-                              ))}
+                          <p className="steps-meta">
+                            <span className="steps-meta-key">Source</span>
+                            <span className="steps-meta-value">
+                              <span className={`steps-confidence steps-confidence-${step.confidence}`}>
+                                {CONFIDENCE_LABELS[step.confidence]}
+                              </span>
+                              <a
+                                className="steps-underline"
+                                href={step.source}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={step.source}
+                                aria-label={`${CONFIDENCE_LABELS[step.confidence]} source at ${host(step.source)}: ${step.source} — opens in a new tab`}
+                              >
+                                {host(step.source)} <Arrow />
+                              </a>
                             </span>
                           </p>
-                        ) : null}
-                      </div>
+                          <p className="steps-confidence-note">{CONFIDENCE_NOTES[step.confidence]}</p>
+                          {step.hardDeadline ? (
+                            <p className="steps-confidence-note">{HARD_DEADLINE_NOTE}</p>
+                          ) : null}
+                          {waitingOn.length > 0 ? (
+                            <p className="steps-waiting">
+                              <span className="steps-mark" data-status="later" aria-hidden="true" />
+                              <span>
+                                <strong className="steps-waiting-key">
+                                  Waiting on{waitingOn.length === 1 ? "" : ` ${waitingOn.length}`}:
+                                </strong>{" "}
+                                {waitingOn.map((dependency, index) => (
+                                  <span key={dependency.id}>
+                                    {index > 0 ? ", " : ""}
+                                    {dependency.title}
+                                  </span>
+                                ))}
+                                {". "}
+                                {opens.length > 0
+                                  ? `You can still tick it — that marks it settled and opens ${opens.length} ${opens.length === 1 ? "milestone" : "milestones"} that wait on it.`
+                                  : "You can still tick it — that marks it settled even though the work above is not finished."}
+                              </span>
+                            </p>
+                          ) : null}
+                          {waitingOn.length === 0 && opens.length > 0 ? (
+                            <p className="steps-waiting">
+                              <span className="steps-mark" data-status="next" aria-hidden="true" />
+                              <span>
+                                {opens.length} {opens.length === 1 ? "milestone is" : "milestones are"}{" "}
+                                dated from this one:{" "}
+                                {opens.map((open, index) => (
+                                  <span key={open.id}>
+                                    {index > 0 ? ", " : ""}
+                                    {open.title}
+                                  </span>
+                                ))}
+                              </span>
+                            </p>
+                          ) : null}
+                        </div>
 
-                      <details className="steps-tasks">
-                        <summary className="steps-tasks-summary">
-                          <span className="steps-tasks-chevron" aria-hidden="true">→</span>
-                          {step.tasks.length} tasks in this milestone
-                        </summary>
-                        <ol className="steps-task-list">
-                          {step.tasks.map((task, index) => (
-                            <li key={`${step.id}-task-${index}`}>{task}</li>
-                          ))}
-                        </ol>
-                      </details>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))
-        )}
-      </div>
+                        <details className="steps-tasks">
+                          <summary className="steps-tasks-summary">
+                            <span className="steps-tasks-chevron" aria-hidden="true">→</span>
+                            The steps, in order
+                          </summary>
+                          <ol className="steps-task-list">
+                            {step.tasks.map((task, index) => (
+                              <li key={`${step.id}-task-${index}`}>{task}</li>
+                            ))}
+                          </ol>
+                        </details>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))
+          )}
+        </div>
 
-      <section className="steps-band" aria-labelledby="steps-band-title" data-reveal>
-        <h2 className="steps-band-title" id="steps-band-title">
-          <span className="steps-mask">
-            <span className="steps-mask-inner" data-mask-reveal>
-              Read the source,
+        <section className="steps-band" aria-labelledby="steps-band-title" data-reveal>
+          <h2 className="steps-band-title" id="steps-band-title">
+            <span className="steps-mask">
+              <span className="steps-mask-inner" data-mask-reveal>
+                Read the source,
+              </span>
             </span>
-          </span>
-          <span className="steps-mask">
-            <span className="steps-mask-inner serif" data-mask-reveal>
-              then trust the date.
+            <span className="steps-mask">
+              <span className="steps-mask-inner serif" data-mask-reveal>
+                then trust the date.
+              </span>
             </span>
-          </span>
-        </h2>
-        {/* The verified/typical/estimate distinction itself. The mechanics of how
-            to find them are already on every row, so they are not restated. */}
-        <p className="steps-band-copy">
-          <strong>Verified</strong> means an official source states the rule, figure or date — not
-          that we hold an official link, because every row has one. <strong>Typical</strong> means a
-          reported pattern. <strong>Estimate</strong> means we inferred it.
-        </p>
-        <nav className="steps-next" aria-label="Where to go next">
-          <Link className="steps-underline" href="/today">
-            What should I do next <Arrow />
-          </Link>
-          <Link className="steps-underline" href="/route">
-            See the route <Arrow />
-          </Link>
-        </nav>
-      </section>
-    </>
+          </h2>
+          {/* The verified/typical/estimate distinction itself. The mechanics of how
+              to find them are already on every row, so they are not restated. */}
+          <p className="steps-band-copy">
+            <strong>Verified</strong> means an official source states the rule, figure or date — not
+            that we hold an official link, because every row has one. <strong>Typical</strong> means a
+            reported pattern. <strong>Estimate</strong> means we inferred it.
+          </p>
+          <nav className="steps-next" aria-label="Where to go next">
+            <Link className="steps-underline" href="/today">
+              What should I do next <Arrow />
+            </Link>
+            <Link className="steps-underline" href="/route">
+              See the route <Arrow />
+            </Link>
+          </nav>
+        </section>
+      </>
+  </GuideProvider>
   );
 }
