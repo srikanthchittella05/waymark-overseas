@@ -4,9 +4,19 @@ export const ARRIVAL_BOOTSTRAP = String.raw`
 (() => {
   const root = document.documentElement;
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const restoreScroll = () => {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+  };
   if (location.pathname !== '/' || location.hash || preference.matches ||
-      performance.getEntriesByType('navigation')[0]?.type === 'back_forward') return;
-  try { if (sessionStorage.getItem('waymark.arrival.v2')) return; } catch {}
+      performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {
+    restoreScroll();
+    return;
+  }
+  // Every fresh document is a fresh entrance. The opening reveal replays on
+  // every reload, so the page always begins from its opening state instead of
+  // from whatever the browser remembers of the last scroll position.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
   root.dataset.waymarkArrival = 'pending';
   let active = true;
   const events = ['keydown', 'pointerdown', 'wheel', 'touchstart'];
@@ -22,7 +32,7 @@ export const ARRIVAL_BOOTSTRAP = String.raw`
       document.dispatchEvent(new Event('waymark:skip-arrival'));
     }
     delete root.dataset.waymarkArrival;
-    try { sessionStorage.setItem('waymark.arrival.v2', '1'); } catch {}
+    restoreScroll();
   };
   const interrupt = () => finish(true);
   const done = () => finish(false);
