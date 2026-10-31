@@ -40,6 +40,11 @@
 :root {
   --paper: var(--color-porcelain);
   --field: var(--color-forest);
+  /* Sky supports information; suit red remains reserved for risk. */
+  --color-sky-on-forest: color-mix(in srgb, var(--color-sky) 58%, var(--color-porcelain));
+  --color-sky-ink: color-mix(in srgb, var(--color-forest) 55%, var(--color-sky));
+  --color-sky-wash: color-mix(in srgb, var(--color-sky) 12%, var(--color-porcelain));
+  --color-signal-wash: color-mix(in srgb, var(--color-signal) 8%, var(--color-halfwhite));
   --rule: color-mix(in srgb, currentColor 16%, transparent);
   --rule-strong: color-mix(in srgb, currentColor 30%, transparent);
   --muted: color-mix(in srgb, var(--color-ink) 66%, transparent);

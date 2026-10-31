@@ -26,11 +26,11 @@ const IMG = "https://images.unsplash.com/photo-";
 export const DESTINATIONS: Destination[] = [
   {
     code: "US",
-    city: "New York",
-    coords: "40.71° N",
+    city: "Chicago",
+    coords: "41.88° N",
     line: "Room to think bigger.",
     image: `${IMG}1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=85`,
-    alt: "Manhattan skyline in the evening",
+    alt: "Chicago Board of Trade Building at the end of LaSalle Street at dusk",
   },
   {
     code: "GB",

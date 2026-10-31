@@ -20,6 +20,7 @@ import {
 import { usePlan, usePlanActions, useProfile } from "@/lib/engine/profile";
 import { formatPlanDate } from "@/lib/format-date";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
+import CountryGallery from "./CountryGallery";
 
 /*
  * Four questions, and the reason the screen exists: making the consequence of
@@ -415,6 +416,8 @@ export default function PathForm({ initialTarget }: {
                 ))}
               </div>
             </fieldset>
+
+            <CountryGallery key={draft.countryCode} code={draft.countryCode} name={activeOption.name} />
 
             <fieldset className="pa-field">
               <legend>03 — Which round</legend>

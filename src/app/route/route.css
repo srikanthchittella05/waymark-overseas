@@ -197,7 +197,7 @@
   width: 0.7rem;
   height: 0.7rem;
   flex: none;
-  color: var(--color-acid);
+  color: var(--color-sky-on-forest);
 }
 .rt-admission-copy h3 {
   font-size: clamp(1.25rem, 2.4vw, 1.9rem);

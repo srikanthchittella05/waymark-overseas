@@ -475,8 +475,8 @@
 }
 /* Confidence is a trust signal, so it is never hidden — and never colour-only. */
 .steps-confidence-verified {
-  background: var(--color-forest);
-  color: var(--color-porcelain);
+  background: var(--color-sky-wash);
+  color: var(--color-sky-ink);
 }
 .steps-confidence-typical {
   border: 1px solid var(--rule-strong);
@@ -602,6 +602,7 @@
   color: var(--muted);
   text-wrap: pretty;
 }
+.steps-band-copy strong:first-child { color: var(--color-sky-on-forest); }
 .steps-next {
   display: flex;
   flex-wrap: wrap;
