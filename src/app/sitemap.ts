@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = "https://waymark.example";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://waymark.example";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

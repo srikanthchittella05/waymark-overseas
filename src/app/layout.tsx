@@ -7,6 +7,7 @@ import { GsapProvider } from "@/components/providers/GsapProvider";
 import CustomCursor from "@/components/ui/CustomCursor";
 import SiteNavigation from "@/components/landing/SiteNavigation";
 import SiteFooter from "@/components/layout/SiteFooter";
+import Analytics from "@/components/monitoring/Analytics";
 import { ARRIVAL_BOOTSTRAP } from "@/lib/arrival-bootstrap";
 import { ProfileProvider } from "@/lib/engine/profile";
 
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Analytics />
         <MotionProvider>
           <GsapProvider>
             <SmoothScroll>

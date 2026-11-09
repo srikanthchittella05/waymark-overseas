@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://waymark.example";
   return {
     rules: [
       {
@@ -9,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/account", "/admin", "/auth", "/api"],
       },
     ],
-    sitemap: "https://waymark.example/sitemap.xml",
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }
