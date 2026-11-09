@@ -858,7 +858,7 @@ export const COUNTRY_CYCLES: CountryCycle[] = [
           "Watch for programmes that close their intake early once capacity is reached"
         ],
         source:
-          "https://csb.utoronto.ca/graduate-studics/prospective-students/admissions",
+          "https://csb.utoronto.ca/graduate-studies/prospective-students/admissions",
         confidence: "verified",
       },
       {
@@ -915,7 +915,7 @@ export const COUNTRY_CYCLES: CountryCycle[] = [
           "Confirm the amount covers the first year of your programme, not your whole course"
         ],
         source:
-          "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada/study-permit/get-documents/proof-financial-support.html",
+          "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada/study-permit/get-documents.html",
         confidence: "typical",
       },
       {
@@ -1065,7 +1065,7 @@ export const COUNTRY_CYCLES: CountryCycle[] = [
           "Check the published course duration, because it determines your visa length and cost"
         ],
         source:
-          "https://www.studyaustralia.gov.au/en/plan-your-move/plan-your-study",
+          "https://www.studyaustralia.gov.au/en/plan-your-studies",
         confidence: "typical",
       },
       {
