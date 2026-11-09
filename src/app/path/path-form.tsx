@@ -171,7 +171,9 @@ export default function PathForm({ initialTarget }: {
   const dirty =
     draft.stage !== profile.stage ||
     draft.countryCode !== profile.countryCode ||
-    draft.intakeId !== profile.intakeId || Boolean(workspace.user && !workspace.hasSavedTarget);
+    draft.intakeId !== profile.intakeId ||
+    Boolean(workspace.user && !workspace.hasSavedTarget) ||
+    Boolean(!workspace.user && !workspace.targetChosen);
 
   const intakeRows = useMemo(
     () =>
@@ -750,8 +752,9 @@ export default function PathForm({ initialTarget }: {
               </span>
               <h3>Clear your progress</h3>
               <p>
-                Unticks the {ticked} milestone{ticked === 1 ? "" : "s"} you have
-                already ticked off, and touches nothing else. Your target stays at{" "}
+                Erases every ticked milestone, checkpoint, piece of evidence and
+                progress history for this intake, and cannot be undone. Your target
+                stays at{" "}
                 {savedPlan.country.name} · {savedPlan.intake.label}.
               </p>
             </div>

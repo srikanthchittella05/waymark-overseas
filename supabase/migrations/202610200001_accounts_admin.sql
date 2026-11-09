@@ -782,6 +782,10 @@ language plpgsql security definer set search_path = '' as $$
 declare v_actor uuid; v_revision public.content_revisions; v_latest uuid; v_country text; v_notice uuid;
 begin
   v_actor := private.require_admin();
+  -- Mirror the application-level affected-plan preview gate. Publication
+  -- stays blocked until a privacy-safe count is available; this prevents an
+  -- administrator from bypassing the app by calling the RPC directly.
+  perform private.check_input(false, 'Publication is blocked: a privacy-safe affected-plan preview is not available yet. The draft remains saved and unpublished.');
   select * into v_revision from public.content_revisions where id = p_revision_id;
   perform private.check_input(found, 'Unknown content revision.');
   perform private.lock_revision_scope(v_revision.kind, v_revision.milestone_id, v_revision.intake_id);

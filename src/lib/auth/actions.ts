@@ -59,7 +59,7 @@ export async function signupAction(_previous: AuthActionState, form: FormData): 
     const { data, error } = await client.auth.signUp({
       email: input.email, password: input.password,
       options: {
-        data: { display_name: input.displayName },
+        data: { full_name: input.displayName },
         emailRedirectTo: `${config.siteUrl}/auth/callback?${new URLSearchParams({ next })}`,
       },
     });
