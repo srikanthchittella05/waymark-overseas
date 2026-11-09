@@ -19,9 +19,9 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 type Beat = 0 | 1 | 2;
 const BEATS = [
-  { key: "target", title: "Choose a horizon.", copy: "A destination. An intake.", caption: "Give the possibility a starting point." },
-  { key: "dates", title: "Find your bearings.", copy: "The dates count backwards.", caption: "The start date becomes an ordered plan." },
-  { key: "next", title: "Make a move.", copy: "One next action, with evidence.", caption: "Know what to pick up first — and why." },
+  { key: "target", title: "Choose a target." },
+  { key: "dates", title: "See the dates." },
+  { key: "next", title: "Find the next step." },
 ] as const;
 const SEEK = [0, 1.5, 2.25] as const;
 const COUNTRIES = countryOptions();
@@ -245,8 +245,8 @@ export default function PlanStory() {
       <section className="ps-story" id="plan" ref={root} aria-labelledby={`${id}-title`}>
         <div className="ps-frame" ref={frame}>
           <header className="ps-heading">
-            <div><p className="ps-eyebrow">02 / POSSIBILITY, MEET PLAN.</p><h2 id={`${id}-title`}>A plan to <em>match.</em></h2></div>
-            <p className="ps-intro">Scroll through the plan.<br />Or choose a chapter below.</p>
+            <div><p className="ps-eyebrow">02 / A SAMPLE PLAN</p><h2 id={`${id}-title`}>A plan to <em>match.</em></h2></div>
+            <p className="ps-intro">Change the destination to explore the sample.</p>
           </header>
 
           <div className="ps-beats" role="group" aria-label="Inspect the sample plan">
@@ -255,7 +255,7 @@ export default function PlanStory() {
                 aria-pressed={beat === index} aria-controls={`${id}-panel`} disabled={!ready}
                 onClick={() => inspect(index as Beat)}>
                 <span className="ps-beat-number" aria-hidden="true">0{index + 1}</span>
-                <span><span className="ps-beat-title">{item.title}</span><span className="ps-beat-copy">{item.copy}</span></span>
+                <span className="ps-beat-title">{item.title}</span>
                 <span className="ps-beat-arrow" aria-hidden="true">↘</span>
               </button>
             ))}
@@ -265,7 +265,7 @@ export default function PlanStory() {
             role="region" aria-labelledby={`${id}-beat-${beat}`}>
             <div className="ps-stage-top">
               <p className="ps-eyebrow">Sample snapshot · <time dateTime={SAMPLE_DATE}>{formatPlanDate(SAMPLE_DATE)}</time></p>
-              <p className="ps-stage-caption" role="status">{BEATS[beat].caption}</p>
+              <p className="sr-only" role="status">Sample view: {BEATS[beat].title}</p>
             </div>
             <div className="ps-stage-grid">
               <div className="ps-target">
@@ -301,7 +301,7 @@ export default function PlanStory() {
                       <li key={step.id} data-next={step.id === next?.id}>
                         <div className="ps-date"><time dateTime={step.dueDate}>{formatPlanDate(step.dueDate)}</time>
                           <span>{Math.abs(step.offsetDays)}d {step.offsetDays < 0 ? "after" : "before"} start</span></div>
-                        <div className="ps-entry"><p className="ps-entry-title">{step.title}</p><Source step={step} /><GuideLinks milestoneId={step.id} className="ps-entry-guides" /></div>
+                        <div className="ps-entry"><p className="ps-entry-title">{step.title}</p><Source step={step} /><GuideLinks milestoneId={step.id} className="ps-entry-guides" limit={1} /></div>
                       </li>
                     ))}
                   </ol>

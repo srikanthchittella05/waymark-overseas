@@ -4,6 +4,7 @@ export const ARRIVAL_BOOTSTRAP = String.raw`
 (() => {
   const root = document.documentElement;
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (!preference.matches) root.dataset.waymarkGraphics = 'pending';
   const restoreScroll = () => {
     if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
   };

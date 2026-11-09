@@ -16,24 +16,21 @@ import { Canvas, useFrame, useThree, type RootState } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
 import {
   ACESFilmicToneMapping,
-  BufferAttribute,
-  BufferGeometry,
-  Color,
   Group,
   MathUtils,
   SRGBColorSpace,
-  Vector3,
   type Mesh,
   type WebGLRenderer,
 } from "three";
+import { createJourneyGeometry } from "@/lib/motion/journey-geometry";
 
 /** Mutate in place; the visible loop samples these without React updates. */
 export type JourneyMotion = {
-  /** 0: horizontal infinity; 1: open orbit. */
+  /** 0: slanted infinity; 1: sculpted aircraft, nose along local +X. */
   scroll: number;
   /** 0: coiled, turned-away entrance; 1: settled infinity. Defaults to 1. */
   arrival?: number;
-  /** 0: full sculpture; 1: small orbit receding into depth. Defaults to 0. */
+  /** 0: full sculpture; 1: small aircraft receding into depth. Defaults to 0. */
   resolve?: number;
 };
 
@@ -94,131 +91,6 @@ function unitProgress(value: number | undefined, fallback = 0) {
   return value !== undefined && Number.isFinite(value) ? MathUtils.clamp(value, 0, 1) : fallback;
 }
 
-/** Clockwise rounded rectangle: eight spans per crowned face, three per bevel. */
-function ribbonSection(index: number, halfWidth: number) {
-  const halfDepth = 0.032;
-  const bevel = 0.024;
-  const shoulder = halfWidth - bevel;
-  const crown = 0.012;
-  let wide: number;
-  let deep: number;
-
-  if (index <= 8 || (index >= 16 && index <= 24)) {
-    const face = index <= 8 ? 1 : -1;
-    const u = index <= 8 ? index / 8 : (index - 16) / 8;
-    wide = face * shoulder * (2 * u - 1);
-    deep = face * (halfDepth + crown * Math.sin(Math.PI * u) ** 2);
-  } else if (index === 12 || index === 28) {
-    wide = index === 12 ? halfWidth : -halfWidth;
-    deep = 0;
-  } else {
-    const corner = index < 12 ? 0 : index < 16 ? 1 : index < 28 ? 2 : 3;
-    const start = [8, 13, 24, 29][corner];
-    const angle = Math.PI / 2 - corner * Math.PI / 2 - ((index - start) / 3) * Math.PI / 2;
-    wide = (corner < 2 ? shoulder : -shoulder) + bevel * Math.cos(angle);
-    deep = (corner === 0 || corner === 3 ? halfDepth - bevel : -halfDepth + bevel) + bevel * Math.sin(angle);
-  }
-
-  return { wide, deep };
-}
-
-/** Two absolute morph endpoints on one closed 256×32 grid / 16,384 triangles. */
-function createRibbonGeometry() {
-  const along = 256;
-  const around = 32;
-  const positions = new Float32Array(along * around * 3);
-  const orbitPositions = new Float32Array(positions.length);
-  const colors = new Float32Array(positions.length);
-  const indices = new Uint16Array(along * around * 6);
-  const center = new Vector3();
-  const tangent = new Vector3();
-  const lateral = new Vector3();
-  const normal = new Vector3();
-  const widthAxis = new Vector3();
-  const depthAxis = new Vector3();
-  const up = new Vector3(0, 0, 1);
-  const orbitCenter = new Vector3();
-  const orbitTangent = new Vector3();
-  const orbitWidthAxis = new Vector3();
-  const orbitDepthAxis = new Vector3();
-  const pearl = new Color("#f0f3ec");
-  const sage = new Color("#c5d5ca");
-  const warmEdge = new Color("#e4d7b6");
-  const acidEdge = new Color("#dce7b3");
-  const color = new Color();
-  const edge = new Color();
-  const orbitRadius = 1.5;
-  const orbitTilt = 0.58;
-  const orbitCosine = Math.cos(orbitTilt);
-  const orbitSine = Math.sin(orbitTilt);
-
-  for (let i = 0; i < along; i++) {
-    const t = (i / along) * Math.PI * 2;
-    // Wide Gerono lobes; the two center crossings are 0.88 units apart in depth.
-    center.set(2.1 * Math.sin(t), 0.79 * Math.sin(2 * t), 0.44 * Math.cos(t) + 0.08 * Math.sin(2 * t));
-    tangent.set(2.1 * Math.cos(t), 1.58 * Math.cos(2 * t), -0.44 * Math.sin(t) + 0.16 * Math.cos(2 * t)).normalize();
-    lateral.crossVectors(tangent, up).normalize();
-    normal.crossVectors(tangent, lateral).normalize();
-
-    // A periodic fold, rather than a full axial turn, keeps the satin faces broad.
-    const twist = 0.58 * Math.sin(2 * t) + 0.22 * Math.cos(t) - 0.12;
-    widthAxis.copy(lateral).multiplyScalar(Math.cos(twist)).addScaledVector(normal, Math.sin(twist));
-    depthAxis.copy(normal).multiplyScalar(Math.cos(twist)).addScaledVector(lateral, -Math.sin(twist));
-    const halfWidth = 0.285 + 0.045 * Math.cos(2 * t - 0.45);
-    edge.copy(warmEdge).lerp(acidEdge, 0.5 + 0.5 * Math.sin(t - 0.5));
-
-    // A tilted circle opens the crossing while keeping the orbit facing the camera.
-    orbitCenter.set(orbitRadius * Math.sin(t), orbitRadius * orbitCosine * Math.cos(t), orbitRadius * orbitSine * Math.cos(t));
-    orbitTangent.set(Math.cos(t), -orbitCosine * Math.sin(t), -orbitSine * Math.sin(t)).normalize();
-    // Both endpoints keep width pointing inward. A radial end frame removes the
-    // infinity's fold cleanly instead of leaving a pinched seam in the open orbit.
-    orbitWidthAxis.set(-Math.sin(t), -orbitCosine * Math.cos(t), -orbitSine * Math.cos(t));
-    orbitDepthAxis.crossVectors(orbitTangent, orbitWidthAxis).normalize();
-
-    for (let j = 0; j < around; j++) {
-      const { wide, deep } = ribbonSection(j, halfWidth);
-      const vertex = (i * around + j) * 3;
-      positions[vertex] = center.x + widthAxis.x * wide + depthAxis.x * deep;
-      positions[vertex + 1] = center.y + widthAxis.y * wide + depthAxis.y * deep;
-      positions[vertex + 2] = center.z + widthAxis.z * wide + depthAxis.z * deep;
-      orbitPositions[vertex] = orbitCenter.x + orbitWidthAxis.x * wide + orbitDepthAxis.x * deep;
-      orbitPositions[vertex + 1] = orbitCenter.y + orbitWidthAxis.y * wide + orbitDepthAxis.y * deep;
-      orbitPositions[vertex + 2] = orbitCenter.z + orbitWidthAxis.z * wide + orbitDepthAxis.z * deep;
-      // Very light alloy tint; the pine contrast comes from reflections, not paint.
-      color.copy(sage).lerp(pearl, MathUtils.smoothstep(-deep, -0.025, 0.025));
-      color.lerp(edge, MathUtils.smoothstep(Math.abs(wide) / halfWidth, 0.94, 1) * 0.32);
-      color.toArray(colors, vertex);
-
-      const a = i * around + j;
-      const b = ((i + 1) % along) * around + j;
-      const c = ((i + 1) % along) * around + ((j + 1) % around);
-      const d = i * around + ((j + 1) % around);
-      indices.set([a, b, d, b, c, d], (i * around + j) * 6);
-    }
-  }
-
-  const geometry = new BufferGeometry();
-  geometry.setAttribute("position", new BufferAttribute(positions, 3));
-  geometry.setAttribute("color", new BufferAttribute(colors, 3));
-  geometry.setIndex(new BufferAttribute(indices, 1));
-  // Both seams share indices, so the normals remain continuous around the loop.
-  geometry.computeVertexNormals();
-  geometry.morphTargetsRelative = false;
-  const orbitGeometry = new BufferGeometry();
-  try {
-    orbitGeometry.setAttribute("position", new BufferAttribute(orbitPositions, 3));
-    orbitGeometry.setIndex(geometry.getIndex());
-    orbitGeometry.computeVertexNormals();
-    geometry.morphAttributes.position = [orbitGeometry.getAttribute("position")];
-    geometry.morphAttributes.normal = [orbitGeometry.getAttribute("normal").clone()];
-  } finally {
-    orbitGeometry.dispose();
-  }
-  // Three includes both absolute morph endpoints in the frustum bounds.
-  geometry.computeBoundingSphere();
-  return geometry;
-}
-
 const StudioEnvironment = memo(function StudioEnvironment() {
   return (
     <Environment frames={1} resolution={256} environmentIntensity={0.9}>
@@ -256,7 +128,7 @@ function RibbonScene({ renderable, animating, generation, motion, onReady, onFai
   const failed = useRef(false);
   const ready = useRef(false);
   const readyFrame = useRef<number | null>(null);
-  const geometry = useMemo(() => createRibbonGeometry(), []);
+  const geometry = useMemo(() => createJourneyGeometry(), []);
   const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
   const setFrameloop = useThree((state) => state.setFrameloop);
@@ -331,7 +203,7 @@ function RibbonScene({ renderable, animating, generation, motion, onReady, onFai
       const resolve = unitProgress(controls?.resolve);
       const influences = ribbon.current?.morphTargetInfluences;
       // Identity stays infinity during arrival; only its depth/framing unfolds.
-      // Scroll opens the crossing, then resolve closes it into the next marker.
+      // Scroll reshapes this same mesh into an aircraft; resolve recedes it.
       if (influences) influences[0] = 1 - (1 - progress) * (1 - resolve);
       if (animating) {
         const dt = Math.min(delta, 1 / 30);
@@ -342,13 +214,15 @@ function RibbonScene({ renderable, animating, generation, motion, onReady, onFai
       if (group.current) {
         const t = elapsed.current;
         const entrance = 1 - arrival;
-        // Small, bounded idle motion preserves the horizontal infinity silhouette.
+        // The infinity is slanted from its first draw. Idle/pointer movement
+        // settles out during morphing so the small plane's nose follows the line.
+        const idle = 1 - progress;
         group.current.rotation.set(
-          0.055 + Math.sin(t * 0.22) * 0.055 + pointer.current.y * 0.035 - entrance * 0.48 + resolve * 0.45,
-          -0.085 + Math.sin(t * 0.19) * 0.07 + pointer.current.x * 0.055 + entrance * 0.72 + resolve * 0.3,
-          -0.015 + Math.sin(t * 0.17) * 0.018 - entrance * 0.52 + progress * 0.13 + resolve * 0.4,
+          (0.055 + Math.sin(t * 0.22) * 0.055 + pointer.current.y * 0.035 - entrance * 0.48) * idle + resolve * 0.45,
+          (-0.085 + Math.sin(t * 0.19) * 0.07 + pointer.current.x * 0.055 + entrance * 0.72) * idle + resolve * 0.3,
+          (-0.22 + Math.sin(t * 0.17) * 0.018 - entrance * 0.32) * idle + resolve * 0.4,
         );
-        group.current.position.set(0, Math.sin(t * 0.26) * 0.024 * arrival * (1 - resolve), -entrance * 0.7 - resolve * 2.4);
+        group.current.position.set(0, Math.sin(t * 0.26) * 0.024 * arrival * (1 - resolve) * idle, -entrance * 0.7 * idle - resolve * 2.4);
         group.current.scale.setScalar(fitScale * MathUtils.lerp(0.72, 1, arrival) * MathUtils.lerp(1, 0.085, resolve));
       }
       gl.render(state.scene, state.camera);
@@ -373,7 +247,7 @@ function RibbonScene({ renderable, animating, generation, motion, onReady, onFai
       <StudioEnvironment key={generation} />
       <hemisphereLight args={["#f0f3e9", "#102b20", 0.4]} />
       <directionalLight position={[-3, 5, 4]} color="#fff9e9" intensity={1.5} />
-      <group ref={group} rotation={[0.055, -0.085, -0.015]} scale={fitScale}>
+      <group ref={group} rotation={[-0.425, 0.635, -0.54]} scale={fitScale * 0.72}>
         <mesh ref={ribbon} args={[geometry]}>
           <meshPhysicalMaterial
             vertexColors
@@ -453,6 +327,7 @@ export default function JourneySculpture({ paused, onReady, motion }: JourneyScu
   const handleFailure = useCallback(() => reportUnavailable(false), [reportUnavailable]);
   const handleContextLost = useCallback(() => reportUnavailable(true), [reportUnavailable]);
   const handleContextRestored = useCallback(() => {
+    container.current?.dispatchEvent(new CustomEvent("journey-sculpture-loading", { bubbles: true }));
     setGeneration((previous) => previous + 1);
     setStatus("loading");
   }, []);

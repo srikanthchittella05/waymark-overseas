@@ -7,6 +7,7 @@ import {
   type Milestone,
   type MilestonePhase,
 } from "./country-cycles";
+import type { DeadlineOverrides } from "@/lib/platform/validation";
 
 /*
  * The engine turns a target (country + intake) into an ordered, dated plan.
@@ -166,14 +167,19 @@ export function buildPlan(
   profile: Profile,
   done: Completion = {},
   now: Date = ENGINE_TODAY,
+  overrides: DeadlineOverrides = {},
 ): Plan {
   const country = getCountry(profile.countryCode);
   const intake = getIntake(country, profile.intakeId);
   const today = todayIso(now);
 
   // 1. Date every milestone by counting back from the intake start.
-  const dated = country.milestones.map((milestone) => {
-    const dueDate = addDays(intake.startDate, -milestone.offsetDays);
+  const dated = country.milestones.map((baseline) => {
+    const override = overrides[baseline.id];
+    const milestone = override ? { ...baseline, offsetDays: override.dueDate
+      ? daysBetween(override.dueDate, intake.startDate) : override.offsetDays,
+      hardDeadline: override.hardDeadline, source: override.source, confidence: override.confidence } : baseline;
+    const dueDate = override?.dueDate ?? addDays(intake.startDate, -milestone.offsetDays);
     const daysUntil = daysBetween(today, dueDate);
     return { milestone, dueDate, daysUntil };
   });
@@ -293,6 +299,38 @@ export function countryOptions(): Array<{
     admission: c.admission,
     intakes: c.intakes,
   }));
+}
+
+export type CheckpointSchedule = {
+  milestoneId: string;
+  dueDate: string;
+  daysRemaining: number;
+  weeksRemaining: number;
+  stages: Array<{ week: number; focus: string[] }>;
+};
+
+export function checkpointSchedule(step: PlanStep, now: Date | string = ENGINE_TODAY): CheckpointSchedule {
+  // A saved plan's daysUntil is a snapshot. Recalculate when the student opens
+  // the schedule so a missed week cannot silently leave the old plan in place.
+  const daysRemaining = daysBetween(typeof now === "string" ? now : todayIso(now), step.dueDate);
+  const weeksRemaining = Math.max(1, Math.ceil(Math.max(1, daysRemaining) / 7));
+  const stages: CheckpointSchedule["stages"] = [];
+  step.tasks.forEach((task, index) => {
+    // Space work across the available time, including the final week; when
+    // time is short, multiple tasks naturally land in the same week.
+    const week = step.tasks.length < 2 ? 1
+      : Math.floor(index * (weeksRemaining - 1) / (step.tasks.length - 1)) + 1;
+    const last = stages.at(-1);
+    if (last?.week === week) last.focus.push(task);
+    else stages.push({ week, focus: [task] });
+  });
+  return {
+    milestoneId: step.id,
+    dueDate: step.dueDate,
+    daysRemaining,
+    weeksRemaining,
+    stages,
+  };
 }
 
 export const CONFIDENCE_LABELS: Record<Confidence, string> = {

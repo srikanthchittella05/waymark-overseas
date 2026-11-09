@@ -1,48 +1,67 @@
-/* One world, rather than a succession of isolated section entrances. */
-.world-opening { position: relative; overflow: clip; }
-.world-horizon { display: none; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.world-opening .hero { overflow: visible; }
-.world-opening .hero-art { top: 46%; left: 65%; width: min(82vw, 90svh, 72rem); }
+/* One original object carries possibility into direction. */
+.world-opening { position: relative; overflow: visible; }
+/* Keep the artwork's orbital rings out of document width without clipping
+   the aircraft's vertical journey into the manifesto. */
+.world-opening .hero { overflow-x: clip; overflow-y: visible; }
+.hero-art-anchor {
+  --hero-art-size: min(78vw, 86svh, 69rem);
+  /* No transform or stacking context here: the entrance child must still be
+     viewport-fixed above its aperture before settling into this layout box. */
+  position: absolute; top: 46%; left: 66%;
+  margin-top: calc(var(--hero-art-size) * -0.5); margin-left: calc(var(--hero-art-size) * -0.5);
+  width: var(--hero-art-size); aspect-ratio: 1; pointer-events: none;
+}
+.world-opening .hero-art { position: absolute; inset: 0; translate: none; width: 100%; height: 100%; }
 .world-opening .hero-title { font-size: clamp(4rem, 12.2vw, 12rem); }
 .world-opening .hero-title .title-line:nth-child(2) { padding-left: 0.075em; }
-.world-opening .art-coordinate { inset: 20% -1% auto auto; }
-.world-opening .art-annotation { inset: auto auto 20% 0; }
 .world-opening .orbital-one { inset: 23% -7%; transform: rotate(-22deg); }
 .world-opening .orbital-two { inset: 17% 6%; transform: rotate(25deg); }
 .world-opening .hero-art-scroll { will-change: transform; }
-.world-opening[data-world-active] .world-horizon { display: block; }
-.world-opening[data-world-active] .manifesto { min-height: 85svh; }
-.world-opening[data-world-active] .manifesto-grid { grid-template-columns: minmax(0, 1fr); width: 65%; gap: 2.25rem; align-items: start; }
-.world-opening .manifesto { position: relative; z-index: auto; }
-.world-opening .manifesto-grid, .world-opening .manifesto .section-label, .world-resolution { position: relative; z-index: 2; }
-.world-opening .manifesto-copy { max-width: 34rem; }
-.world-opening .manifesto-copy .small-cross { display: none; }
-.world-resolution { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3.5rem; color: var(--color-acid); }
-.world-route { position: absolute; z-index: 1; inset: auto 0 0; width: 100%; height: min(58vw, 560px); pointer-events: none; }
-.aeroplane { position: absolute; z-index: 2; top: 0; left: 0; width: 48px; height: 48px; pointer-events: none; will-change: transform; filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--color-acid) 40%, transparent)); }
-.world-route path { stroke: var(--color-acid); stroke-opacity: 0.42; stroke-width: 1; stroke-dasharray: 1; }
+
+.world-opening .manifesto { position: relative; overflow: visible; min-height: 100svh; padding-top: clamp(3rem, 7vh, 6rem); }
+.manifesto-grid, .manifesto .section-label { position: relative; z-index: 2; }
+.world-opening .manifesto-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 2rem; align-items: center; padding-block: clamp(3.5rem, 9vh, 7rem); }
+.world-opening .manifesto-statement { font-size: clamp(3.2rem, 6.1vw, 6.4rem); line-height: 1.02; letter-spacing: -0.055em; }
+.manifesto-message { min-width: 0; }
+.world-opening .manifesto-copy { max-width: 33rem; gap: 1.2rem; margin-top: clamp(1.75rem, 4vh, 3rem); }
+.world-opening .manifesto-copy .manifesto-detail { max-width: 36ch; font-family: var(--font-geist-sans), sans-serif; font-size: 0.9375rem; font-style: normal; line-height: 1.7; color: #b5cdc4; }
+.manifesto-copy .text-link { justify-self: start; min-height: 2.75rem; }
+.manifesto-art-slot { min-width: 0; width: 100%; aspect-ratio: 1; position: relative; pointer-events: none; }
+.flight-static { position: absolute; z-index: 2; left: calc(var(--flight-origin-x, 78%) - 48px); top: calc(var(--flight-origin-y, 24%) - 48px); width: 96px; height: 96px; transform: rotate(180deg); pointer-events: none; }
+.scene-can-fly .flight-static { display: none; }
+.world-route { position: absolute; z-index: 1; inset: 0 auto auto 0; width: 100%; height: calc(100% + 4px); overflow: visible; pointer-events: none; }
+.world-route path { stroke: var(--color-acid); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.world-route-track { stroke-opacity: 0.25; }
+.world-route-ink { stroke-opacity: 0.8; stroke-dasharray: 1; stroke-dashoffset: 1; }
 .world-route circle { fill: var(--color-acid); }
 
-/* A real aperture. No fake progress counter, sliding shutters, or duplicate logo. */
+/* The poster is a genuine fallback, never a horizontal stand-in before the
+   live slanted infinity. The parser-time attribute also covers hydration. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-waymark-graphics="pending"] .sculpture-fallback,
+  .landing[data-motion="on"] .sculpture-fallback { visibility: hidden; opacity: 0; transition: none; }
+  .hero-art[data-graphics="unavailable"] .sculpture-fallback { visibility: visible; opacity: 1; }
+}
+.journey-sculpture { opacity: 0; transition: opacity 0.3s ease-out; }
+.journey-sculpture[data-webgl-status="ready"] { opacity: 1; }
+
+/* A bounded, input-skippable aperture, never a simulated loading counter. */
 .arrival-veil { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; }
 .arrival-copy { top: 74%; }
 .arrival-brand { font-size: clamp(1.65rem, 3.2vw, 3rem); font-weight: 400; letter-spacing: -0.045em; }
 .arrival-copy-inner > span:last-child { font-size: clamp(1rem, 1.6vw, 1.4rem); color: var(--color-acid); }
 html[data-waymark-arrival="pending"] .landing .hero-art {
-  position: fixed; top: 43%; left: 50%; width: min(92vw, 88svh, 72rem);
+  position: fixed; inset: auto; top: 43%; left: 50%; width: min(92vw, 88svh, 72rem); height: auto;
   margin: 0; translate: -50% -50%; z-index: 72;
 }
 html[data-waymark-arrival="pending"] .site-header { transform: translateY(-110%); }
 html[data-waymark-arrival="pending"] .hero-title .line-inner { transform: translateY(112%); }
 html[data-waymark-arrival="pending"] .hero-kicker,
-html[data-waymark-arrival="pending"] .hero-bottom,
-html[data-waymark-arrival="pending"] .hero-rail { clip-path: inset(0 100% 0 0); }
+html[data-waymark-arrival="pending"] .hero-bottom { clip-path: inset(0 100% 0 0); }
 html[data-waymark-arrival="pending"] .orbital,
 html[data-waymark-arrival="running"] .orbital { opacity: 0; }
-html[data-waymark-arrival="running"] .art-annotation,
-html[data-waymark-arrival="running"] .art-coordinate { visibility: hidden; }
 
-/* Four product views, exposed rather than hidden behind a marketing claim. */
+/* A scannable product index, rather than another collection of floating cards. */
 .product-journey { position: relative; background: var(--paper); }
 .journey-heading { margin-block: clamp(2.5rem, 6vw, 5.5rem); font-size: clamp(2.3rem, 5.8vw, 5.4rem); font-weight: 500; line-height: 1.02; letter-spacing: -0.055em; }
 .journey-heading .serif { color: var(--color-ink-soft); }
@@ -56,28 +75,33 @@ html[data-waymark-arrival="running"] .art-coordinate { visibility: hidden; }
 .journey-view-index { align-self: start; padding-top: 0.2rem; }
 .journey-view-title > .eyebrow { margin-bottom: 0.6rem; }
 .journey-view-title h3 { font-size: clamp(1.6rem, 3.2vw, 3rem); line-height: 1.07; font-weight: 500; letter-spacing: -0.045em; }
-.journey-view-copy p { max-width: 39ch; font-size: clamp(0.875rem, 1.1vw, 1rem); line-height: 1.55; color: var(--muted); }
-.journey-view-copy > .eyebrow { display: block; margin-top: 1.05rem; font-size: 0.5625rem; }
+.journey-view-copy p { max-width: 39ch; font-size: clamp(0.9375rem, 1.1vw, 1rem); line-height: 1.65; color: var(--muted); }
 .journey-view-arrow { display: grid; place-content: center; width: 3.5rem; aspect-ratio: 1; border: 1px solid var(--rule-strong); border-radius: 50%; transition: color 0.4s, background 0.4s, transform 0.4s var(--ease-brand); }
 .journey-view-arrow svg { width: 1.15rem; height: 1.15rem; }
 .journey-view:hover .journey-view-arrow, .journey-view:focus-visible .journey-view-arrow { background: var(--field); color: var(--color-acid); transform: rotate(45deg); }
-.journey-local { padding-top: 1.25rem; border-top: 1px solid var(--rule); font-size: 0.75rem; line-height: 1.5; color: var(--muted); }
-.destination-card { color: inherit; text-decoration: none; }
+.journey-local { max-width: 85ch; padding-top: 1.25rem; border-top: 1px solid var(--rule); font-size: 0.8125rem; line-height: 1.65; color: var(--muted); }
+.destination-card { color: inherit; text-decoration: none; border-radius: 0.5rem; }
 .destination-card:focus-visible { outline-offset: -5px; }
 .destination-card:focus-visible .destination-arrow { background: var(--color-acid); color: var(--field); }
+.destination-controls { display: flex; align-items: center; gap: 0.6rem; }
+.destination-controls > button { display: grid; place-content: center; flex: none; width: 2.75rem; height: 2.75rem; border: 1px solid color-mix(in srgb, var(--paper) 38%, transparent); border-radius: 50%; color: var(--paper); cursor: pointer; transition: color 0.25s, background 0.25s; }
+.destination-controls > button:hover { background: var(--color-acid); color: var(--field); }
+.destination-controls .text-link { margin-left: 0.75rem; min-height: 2.75rem; }
 
-/* A native-flow touch experience retains the unfolding and typography motion. */
 @media (max-width: 899px) {
   .world-opening .hero { gap: 1.6rem; }
   .world-opening .hero-title { font-size: clamp(3.2rem, 15.8vw, 7.5rem); }
-  .world-opening .hero-art { position: relative; top: auto; left: auto; translate: none; width: min(100%, 38rem); margin: -0.5rem auto 0; aspect-ratio: 1.45; }
-  .world-opening .hero-art-scroll { inset: -22% 0; }
-  .world-opening .art-coordinate { inset: 4% 0 auto auto; font-size: 0.5625rem; }
-  .world-opening .art-annotation { inset: auto auto 0 0; font-size: 0.8125rem; }
-  .world-opening .manifesto-grid { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
-  .world-opening .manifesto-statement { font-size: clamp(2.4rem, 9vw, 4.5rem); }
-  .world-opening .world-route { opacity: 0.25; height: 18rem; }
-  .world-resolution { flex-wrap: wrap; margin-top: 2.5rem; }
+  .hero-art-anchor { position: relative; top: auto; left: auto; width: min(100%, 38rem); margin: -0.5rem auto 0; aspect-ratio: 1.4; }
+  .world-opening .hero-art-scroll { inset: 0; }
+  .world-opening .orbital-one { inset-inline: 0; }
+  .world-opening .manifesto { min-height: auto; padding-block: 3.5rem 2.5rem; }
+  .world-opening .manifesto-grid { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; padding-block: 2.5rem 1.5rem; }
+  .world-opening .manifesto-statement { font-size: clamp(2.5rem, 10.5vw, 5.6rem); }
+  .world-opening .manifesto-copy { margin-top: 1.75rem; }
+  .manifesto-message { padding-right: 3.75rem; }
+  .world-opening .manifesto-statement { font-size: clamp(2rem, 9vw, 5.6rem); }
+  .manifesto-art-slot { width: min(100%, 34rem); margin-inline: auto; height: 10rem; aspect-ratio: auto; }
+  .flight-static { left: calc(var(--flight-origin-x, calc(100% - 32px)) - 32px); top: calc(var(--flight-origin-y, 10rem) - 32px); width: 64px; height: 64px; }
   .journey-view { grid-template-columns: 1.5rem minmax(0, 1fr) 2.75rem; gap: 1rem; }
   .journey-view-copy { grid-column: 2; grid-row: 2; }
   .journey-view-arrow { grid-column: 3; grid-row: 1 / 3; width: 2.75rem; }
@@ -85,8 +109,13 @@ html[data-waymark-arrival="running"] .art-coordinate { visibility: hidden; }
   .arrival-copy { top: 68%; }
 }
 @media (min-width: 900px) and (max-height: 549px) {
-  .world-opening .hero-art { width: min(65vw, 90svh); }
+  .hero-art-anchor { --hero-art-size: min(65vw, 90svh); }
   .world-opening .hero-title { font-size: clamp(3rem, 9vw, 7rem); }
+  .world-opening .manifesto-statement { font-size: clamp(3rem, 5vw, 5rem); }
+}
+@media (max-width: 420px) {
+  .destination-controls { flex-wrap: wrap; }
+  .destination-controls .text-link { margin-left: 0.25rem; font-size: 0.8125rem; }
 }
 @media (hover: none), (pointer: coarse) {
   .destination-viewport { overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: thin; }

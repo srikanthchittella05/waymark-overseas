@@ -1,7 +1,12 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { navLabelsFor } from "@/lib/engine/guides/archetypes";
 import { useGuide } from "./GuideProvider";
+
+const subscribe = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
 
 /*
  * The named links under a milestone.
@@ -18,12 +23,16 @@ import { useGuide } from "./GuideProvider";
 export default function GuideLinks({
   milestoneId,
   className = "",
+  limit,
 }: {
   milestoneId: string;
   className?: string;
+  /** Marketing samples show a single useful doorway; the planner keeps all. */
+  limit?: number;
 }) {
   const { open, openGuide } = useGuide();
-  const sections = navLabelsFor(milestoneId);
+  const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
+  const sections = navLabelsFor(milestoneId).slice(0, limit);
   if (!sections.length) return null;
 
   return (
@@ -34,6 +43,7 @@ export default function GuideLinks({
           <button
             key={section.id}
             type="button"
+            disabled={!ready}
             className="guide-link"
             data-guide-link={section.id}
             aria-expanded={isOpen}

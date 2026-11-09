@@ -6,14 +6,18 @@ import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
 
-const menuItems = [
-  { href: "/#vision", label: "The idea" },
-  { href: "/#plan", label: "The plan" },
-  { href: "/#possibilities", label: "Where" },
-  { href: "/today", label: "Today" },
-  { href: "/route", label: "The Route" },
-  { href: "/steps", label: "The Steps" },
-  { href: "/path", label: "Your Path" },
+const menuGroups = [
+  { title: "Discover Waymark", items: [
+    { href: "/#vision", label: "The idea" },
+    { href: "/#plan", label: "See it work" },
+    { href: "/#possibilities", label: "Destinations" },
+  ] },
+  { title: "Your planning space", items: [
+    { href: "/today", label: "Today" },
+    { href: "/route", label: "The Route" },
+    { href: "/steps", label: "The Steps" },
+    { href: "/path", label: "Your Path" },
+  ] },
 ] as const;
 
 function subscribeToScroll(onChange: () => void) {
@@ -206,7 +210,7 @@ export default function SiteNavigation() {
 
     contextRef.current = gsap.context(() => {
       const links = dialog.querySelectorAll(".menu-link");
-      const details = dialog.querySelectorAll(".menu-eyebrow, .menu-bottom");
+      const details = dialog.querySelectorAll(".menu-bottom");
       const timeline = gsap.timeline({
         onComplete: () => {
           if (phaseRef.current === "opening") phaseRef.current = "open";
@@ -255,8 +259,11 @@ export default function SiteNavigation() {
             <BrandMark />
             <span>waymark<span className="brand-period">.</span></span>
           </Link>
-          <p className="nav-tagline">For the life you haven’t met yet.</p>
           <div className="nav-actions">
+            <Link href="/account" className="nav-account" aria-label="Your account">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3" stroke="currentColor" strokeWidth="1.4"/><path d="M5 20v-1a7 7 0 0 1 14 0v1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+              <span>Your account</span>
+            </Link>
             <Link href="/today" className="nav-roadmap">
               See your next step <span aria-hidden="true">↗</span>
             </Link>
@@ -270,8 +277,8 @@ export default function SiteNavigation() {
               aria-expanded={menuOpen}
               onClick={openMenu}
             >
-              <span aria-hidden="true" />
-              <span aria-hidden="true" />
+              <span className="menu-toggle-label" aria-hidden="true">Menu</span>
+              <span className="menu-toggle-icon" aria-hidden="true"><span /><span /></span>
             </button>
           </div>
         </nav>
@@ -309,9 +316,10 @@ export default function SiteNavigation() {
             Close <span aria-hidden="true">×</span>
           </button>
         </div>
-        <p className="eyebrow menu-eyebrow">A bigger world starts here.</p>
         <nav className="menu-links" aria-label="Explore Waymark">
-          {menuItems.map(({ href, label }, index) => (
+          {menuGroups.map((group, groupIndex) => <div className="menu-group" key={group.title}>
+            <p className="menu-group-title eyebrow">{group.title}</p>
+            {group.items.map(({ href, label }, index) => (
             <Link
               key={href}
               href={href}
@@ -319,15 +327,15 @@ export default function SiteNavigation() {
               aria-current={pathname === href ? "page" : undefined}
               onNavigate={closeForNavigation}
             >
-              <span className="menu-number" aria-hidden="true">0{index + 1}</span>
+              <span className="menu-number" aria-hidden="true">0{index + 1 + (groupIndex ? 3 : 0)}</span>
               <span>{label}</span>
               <span className="menu-link-arrow" aria-hidden="true">↗</span>
             </Link>
-          ))}
+            ))}
+          </div>)}
         </nav>
         <div className="menu-bottom">
-          <p>For the life you haven’t met yet.</p>
-          <p>Study abroad. Find your next step.</p>
+          <Link href="/account" className="menu-account-link" onNavigate={closeForNavigation}>Your account <span aria-hidden="true">↗</span></Link>
         </div>
       </dialog>
     </>

@@ -25,6 +25,8 @@ import { formatPlanDate } from "@/lib/format-date";
 import GuideProvider from "@/components/guide/GuideProvider";
 import GuideLinks from "@/components/guide/GuideLinks";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
+import PlanPersistenceNotice, { usePlanWriteDisabled } from "@/components/account/PlanPersistenceNotice";
+import CheckpointPanel from "@/components/checkpoint/CheckpointPanel";
 
 /*
  * The graph, drawn by hand rather than with a node-graph library.
@@ -198,6 +200,7 @@ export default function RouteGraph({
   initialPlan: Plan;
 }) {
   const { toggleStep } = usePlanActions();
+  const writeDisabled = usePlanWriteDisabled();
   const { shouldAnimate } = useMotionPreferences();
 
   const mounted = useSyncExternalStore(subscribeToNothing, getMounted, getServerMounted);
@@ -241,6 +244,8 @@ export default function RouteGraph({
   const selectedId =
     picked && byId.has(picked) ? picked : (plan.nextStep?.id ?? ordered[0]?.id ?? null);
   const selected = selectedId ? (byId.get(selectedId) ?? null) : null;
+  const selectedHasCompletedDependents = Boolean(selected && plan.steps.some((step) =>
+    step.dependsOn.includes(selected.id) && done[step.id]));
   // Keep the chosen relationship visible after the pointer or focus leaves.
   const relationshipId = active ?? selectedId;
   const blockers = useMemo(
@@ -484,6 +489,7 @@ export default function RouteGraph({
             </span>
           </p>
         </header>
+        <PlanPersistenceNotice />
 
         <section className="route-section" aria-labelledby="rt-graph">
           <div className="rt-section-head">
@@ -774,8 +780,7 @@ export default function RouteGraph({
                   <p className="rt-detail-due">
                     Due <strong>{formatPlanDate(selected.dueDate)}</strong> —{" "}
                     <strong>{countdown(selected.offsetDays)}</strong>,{" "}
-                    {countdownWords(selected)}
-                    {selected.offsetDays < 0 ? ", after your course has started" : ""}.
+                    {countdownWords(selected)}.
                   </p>
                 </div>
 
@@ -850,10 +855,19 @@ export default function RouteGraph({
                 </div>
 
                 <div className="rt-detail-actions">
+                  {selected.blockers.length > 0 && !done[selected.id] ? <p id={`route-gate-${selected.id}`} className="rt-detail-note">
+                    Finish the {selected.blockers.length} prerequisite{selected.blockers.length === 1 ? "" : "s"} before marking this done. You can still prepare and add evidence.
+                  </p> : null}
+                  {done[selected.id] && selectedHasCompletedDependents ?
+                    <p id={`route-gate-dependents-${selected.id}`} className="rt-detail-note">Reopen completed dependent milestones first.</p> : null}
                   <button
                     type="button"
                     className="rt-button"
-                    onClick={() => toggleStep(selected.id)}
+                    disabled={writeDisabled || (!done[selected.id] && selected.blockers.length > 0) ||
+                      Boolean(done[selected.id] && selectedHasCompletedDependents)}
+                    aria-describedby={!done[selected.id] && selected.blockers.length > 0 ? `route-gate-${selected.id}`
+                      : done[selected.id] && selectedHasCompletedDependents ? `route-gate-dependents-${selected.id}` : undefined}
+                    onClick={() => void toggleStep(selected.id)}
                   >
                     <span aria-hidden="true">
                       <StatusGlyph status={done[selected.id] ? "later" : "done"} />
@@ -861,6 +875,7 @@ export default function RouteGraph({
                     {done[selected.id] ? "Undo — mark this not done" : "Mark this done"}
                   </button>
                 </div>
+                <CheckpointPanel step={selected} lockedByDependents={selectedHasCompletedDependents} />
               </div>
             ) : (
               <p className="route-empty">
@@ -935,8 +950,8 @@ export default function RouteGraph({
               </strong>{" "}
               The other {plan.counts.unverified} are a planning default, labelled on
               their row and linked to the page they came from — read it before you
-              rely on it. Nothing is stored on a server; your plan lives in this
-              browser only.
+              rely on it. Sign in to save your plan across devices. Guest previews
+              are temporary and are not uploaded.
               {afterIntake.length > 0 ? (
                 <>
                   {" "}

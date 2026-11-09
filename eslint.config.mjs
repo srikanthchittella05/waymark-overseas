@@ -9,9 +9,14 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".next-verify/**",
+    ".next-e2e/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local evidence and historical snapshots are not application source.
+    "logs/**",
+    ".recovery-archive/**",
   ]),
 ]);
 

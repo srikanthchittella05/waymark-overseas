@@ -12,7 +12,7 @@
   --rule: color-mix(in srgb, var(--color-forest) 15%, transparent);
   --rule-strong: color-mix(in srgb, var(--color-forest) 28%, transparent);
   --muted: color-mix(in srgb, var(--color-ink) 66%, transparent);
-  padding-bottom: clamp(2rem, 5vw, 4rem);
+  padding-bottom: 0;
 }
 
 /* ------------------------------- head ---------------------------------- */
@@ -98,7 +98,6 @@
   grid-template-columns: minmax(0, 1fr);
   margin: clamp(1.5rem, 3.5vw, 3rem) var(--pad-x) 0;
   padding: clamp(1.25rem, 2.6vw, 2.6rem);
-  border: 1px solid var(--rule);
   border-radius: clamp(1rem, 1.7vw, 1.7rem);
   background: var(--color-halfwhite);
   box-shadow:
@@ -404,7 +403,6 @@
 .today-blocked {
   margin: clamp(1.25rem, 2.5vw, 2rem) var(--pad-x) 0;
   padding: clamp(1.1rem, 2.2vw, 1.9rem);
-  border: 1px solid color-mix(in srgb, var(--color-forest) 14%, transparent);
   border-radius: clamp(0.9rem, 1.4vw, 1.4rem);
   background: color-mix(in srgb, var(--color-acid) 12%, transparent);
 }
@@ -485,47 +483,84 @@
 /* -------------------------------- risk --------------------------------- */
 
 .today-risk {
-  margin: clamp(2rem, 4.5vw, 3.5rem) var(--pad-x) 0;
+  margin: clamp(2.75rem, 6vw, 5.5rem) var(--pad-x) 0;
 }
 .today-risk-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 21rem);
+  align-items: end;
   justify-content: space-between;
-  gap: 0.5rem 1.5rem;
-  padding-bottom: clamp(0.8rem, 1.5vw, 1.15rem);
+  gap: 1.5rem 3rem;
+  padding-bottom: clamp(1.3rem, 2.6vw, 2.25rem);
   border-bottom: 1px solid var(--rule);
 }
-.today-section-title {
-  font-size: clamp(1.35rem, 2.6vw, 2rem);
+.today-risk-eyebrow,
+.today-risk-resources-label {
+  font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
-.today-section-note {
-  font-size: 0.8125rem;
-  line-height: 1.5;
+.today-risk-heading {
+  margin-top: 0.85rem;
+  font-size: clamp(2.35rem, 5vw, 4.75rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.96;
+  text-wrap: balance;
+}
+.today-risk-heading em {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+}
+.today-risk-intro {
+  display: flex;
+  align-items: end;
+  gap: clamp(0.9rem, 2vw, 1.5rem);
+}
+.today-risk-count {
+  font-family: var(--font-serif);
+  font-size: clamp(3.1rem, 5vw, 4.75rem);
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 0.86;
+  color: var(--color-signal);
+}
+.today-risk-intro p {
+  max-width: 25ch;
+  font-size: 0.875rem;
+  line-height: 1.55;
   color: var(--muted);
 }
 .today-risk-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr));
-  gap: 1px;
-  margin-top: 1px;
-  background: var(--rule);
-  border-bottom: 1px solid var(--rule);
+  gap: 0.85rem;
+  margin-top: clamp(1rem, 2vw, 1.6rem);
 }
 .today-risk-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding: clamp(1rem, 1.8vw, 1.4rem) clamp(0.85rem, 1.5vw, 1.2rem);
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr) minmax(16rem, 0.9fr);
+  gap: clamp(1.2rem, 3vw, 3rem);
+  padding: clamp(1.25rem, 2.7vw, 2.5rem);
+  border-radius: 0.9rem;
   background: var(--color-signal-wash);
+  box-shadow: 0 16px 38px -34px color-mix(in srgb, var(--color-forest) 40%, transparent);
+}
+.today-risk-index {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--color-signal);
+}
+.today-risk-story,
+.today-risk-resources {
+  min-width: 0;
 }
 .today-risk-phase {
   font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -533,53 +568,83 @@
   color: var(--color-signal);
 }
 .today-risk-title {
-  font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+  max-width: 22ch;
+  margin-top: 1rem;
+  font-size: clamp(1.45rem, 2.35vw, 2.35rem);
   font-weight: 500;
-  letter-spacing: -0.028em;
-  line-height: 1.15;
-  text-wrap: pretty;
+  letter-spacing: -0.045em;
+  line-height: 1.06;
+  text-wrap: balance;
 }
-.today-risk-date {
-  font-size: 0.8125rem;
-  line-height: 1.45;
+.today-risk-date, .today-risk-gate {
+  font-size: 0.875rem;
+  line-height: 1.55;
   color: var(--muted);
+}
+.today-risk-date { margin-top: 1rem; }
+.today-risk-resources {
+  padding-left: clamp(1rem, 2.5vw, 2.25rem);
+}
+.today-risk-guides {
+  display: grid;
+  gap: 0;
+  margin-top: 0.75rem;
+}
+.today-risk-guides .guide-link {
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  padding-block: 0.48rem;
+  border-bottom: 0;
+}
+.today-risk-guides .guide-link-arrow {
+  flex: none;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.today-risk-guides .guide-link:is(:hover, :focus-visible) .guide-link-arrow {
+  transform: translate(3px, -0.02em);
+}
+.today-risk-gate { margin-top: 1rem; }
+.today-risk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin-top: 1.15rem;
 }
 .today-risk-done {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  align-self: start;
-  margin-top: auto;
-  padding-top: 0.6rem;
-  font-size: 0.8125rem;
+  min-height: 44px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  /* Underline draws itself; the row and the label never change colour. */
-  background-image: linear-gradient(currentColor, currentColor);
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 0 1px;
-  transition: background-size var(--dur) var(--ease-brand);
 }
-.today-risk-done:hover,
-.today-risk-done:focus-visible {
-  background-size: 100% 1px;
+.today-risk-done:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 .today-risk-done-mark {
   display: grid;
   place-content: center;
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.3rem;
+  height: 1.3rem;
   border: 1px solid var(--rule-strong);
   border-radius: 50%;
   font-size: 0.7rem;
   line-height: 1;
   transition: transform var(--dur) var(--ease-brand);
 }
-.today-risk-done:hover .today-risk-done-mark,
-.today-risk-done:focus-visible .today-risk-done-mark {
+.today-risk-done:not(:disabled):hover .today-risk-done-mark,
+.today-risk-done:not(:disabled):focus-visible .today-risk-done-mark {
   transform: scale(1.1);
 }
+.today-risk-actions .today-underline { min-height: 44px; }
+.today-risk-resources > details { margin-top: 1.25rem; }
 .today-risk-more {
   padding-top: clamp(0.9rem, 1.8vw, 1.25rem);
   font-size: 0.875rem;
@@ -694,6 +759,7 @@
 /* Only the clear-everything action on the empty state still reads as a pill. */
 .today-pill {
   display: inline-flex;
+  max-width: 100%;
   align-items: center;
   gap: 0.85rem;
   padding: 0.6rem 0.7rem 0.6rem 1.4rem;
@@ -705,7 +771,7 @@
   letter-spacing: -0.005em;
   text-decoration: none;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
   /* Identical background, border and radius at rest and on hover. */
 }
 .today-pill-quiet {
@@ -715,6 +781,7 @@
 }
 .today-pill-arrow {
   display: grid;
+  flex: none;
   place-content: center;
   width: 2rem;
   height: 2rem;
@@ -755,8 +822,28 @@
 
 /* ----------------------------- responsive ------------------------------ */
 
+@media (max-width: 850px) {
+  .today-risk-head { grid-template-columns: minmax(0, 1fr); }
+  .today-risk-intro p { max-width: 38ch; }
+  .today-risk-item {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 1rem;
+  }
+  .today-risk-resources {
+    grid-column: 2;
+    padding: 1.1rem 0 0;
+  }
+}
 @media (max-width: 600px) {
-  .today-risk-list {
+  .today-risk-intro { align-items: center; }
+  .today-risk-item {
     grid-template-columns: minmax(0, 1fr);
+    gap: 0.9rem;
+  }
+  .today-risk-index { font-size: 1.4rem; }
+  .today-risk-title { margin-top: 0.6rem; }
+  .today-risk-resources {
+    grid-column: 1;
+    padding-top: 1.25rem;
   }
 }

@@ -254,8 +254,8 @@ export const LANGUAGE_TEST: Record<string, GuideContent> = {
           {
             title: "E2 IELTS",
             kind: "video",
-            url: "https://e2 IELTS.com/",
-            why: "Free structured courses for all four IELTS skills, with the band descriptors explained in plain language. Useful when you do not yet know how a 7.0 answer differs from a 6.5 one.",
+            url: "https://www.youtube.com/c/E2IELTS",
+            why: "Free video lessons for IELTS skills and task strategies. Useful alongside official practice when you need a teacher to explain an approach; the provider's separate paid courses are not required to watch the channel.",
             free: true,
             verifiedOn: V,
           },

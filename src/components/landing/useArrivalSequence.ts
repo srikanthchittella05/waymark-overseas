@@ -68,25 +68,23 @@ export function useArrivalSequence(
     sequence
       .fromTo(".hero-title .line-inner", { yPercent: 112, rotation: 4 },
         { yPercent: 0, rotation: 0, duration: 1.1, stagger: 0.12 }, textAt)
-      .fromTo(".hero-kicker, .hero-bottom, .hero-rail", { clipPath: "inset(0% 100% 0% 0%)", y: 18 },
-        { clipPath: "inset(0% 0% 0% 0%)", y: 0, duration: 0.8, stagger: 0.07 }, textAt + 0.28)
-      .fromTo(".art-coordinate, .art-annotation", { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.65, stagger: 0.06 }, textAt + 0.45);
+      .fromTo(".hero-kicker, .hero-bottom", { clipPath: "inset(0% 100% 0% 0%)", y: 18 },
+        { clipPath: "inset(0% 0% 0% 0%)", y: 0, duration: 0.8, stagger: 0.07 }, textAt + 0.28);
     if (header && full) sequence.fromTo(header, { yPercent: -110 }, { yPercent: 0, duration: 0.8 }, 1.35);
 
-    // Compile the real material before the cinematic handoff, without an unbounded
-    // loading screen. A slow/denied GPU simply uses the matching static artwork.
-    let wait = 0;
-    const play = () => { window.clearTimeout(wait); sequence.play(); };
-    const interrupt = () => { window.clearTimeout(wait); sequence.progress(1); };
+    // Hold the genuine slanted pose until its first successful draw. No poster
+    // crossfade and no timer may start unfolding an invisible mesh. The bootstrap
+    // still releases the cosmetic veil after 4.5s or any user input.
+    const play = () => sequence.play();
+    const interrupt = () => sequence.progress(1);
     sculpture.addEventListener("journey-sculpture-ready", play, { once: true });
     document.addEventListener("waymark:skip-arrival", interrupt);
+    sculpture.addEventListener("journey-sculpture-unavailable", interrupt);
     if (!full || sculpture.querySelector('[data-webgl-status="ready"]')) play();
-    else wait = window.setTimeout(play, 1000);
     return () => {
-      window.clearTimeout(wait);
       sculpture.removeEventListener("journey-sculpture-ready", play);
       document.removeEventListener("waymark:skip-arrival", interrupt);
+      sculpture.removeEventListener("journey-sculpture-unavailable", interrupt);
       finish();
     };
   }, { scope: root, dependencies: [shouldAnimate], revertOnUpdate: true });

@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { PlanStep } from "@/lib/engine/plan";
 import type { Guide } from "@/lib/engine/guides/types";
 import GuideSheet from "./GuideSheet";
+import { parseGuideResponse } from "@/lib/platform/guide-response";
 
 /*
  * The dossier opener.
@@ -19,14 +20,13 @@ import GuideSheet from "./GuideSheet";
  */
 
 type Open = { milestoneId: string; sectionId: string | null };
+type Opening = Open & { requestId: number };
 
 type GuideContextValue = {
   open: Open | null;
   openGuide: (milestoneId: string, sectionId?: string | null) => void;
   closeGuide: () => void;
 };
-
-import { createContext, useContext } from "react";
 
 const GuideContext = createContext<GuideContextValue | null>(null);
 
@@ -42,7 +42,12 @@ function parseHash(hash: string): Open | null {
   const params = new URLSearchParams(raw);
   const milestoneId = params.get("m");
   if (!milestoneId) return null;
-  return { milestoneId, sectionId: params.get("s") };
+  return { milestoneId, sectionId: params.get("s") || null };
+}
+
+function historyState(): Record<string, unknown> {
+  const state: unknown = window.history.state;
+  return state && typeof state === "object" ? state as Record<string, unknown> : {};
 }
 
 export default function GuideProvider({
@@ -52,78 +57,126 @@ export default function GuideProvider({
   steps: PlanStep[];
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState<Open | null>(null);
-  const [loaded, setLoaded] = useState<{ id: string; guide: Guide | null } | null>(null);
-  const pushed = useRef(false);
+  const [open, setOpen] = useState<Opening | null>(null);
+  const [loaded, setLoaded] = useState<{ requestId: number; guide: Guide | null } | null>(null);
+  const selectionRef = useRef<Opening | null>(null);
+  const sequence = useRef(0);
+  const entryId = useRef<string | null>(null);
+  const closing = useRef(false);
+  const openerRef = useRef<HTMLElement | null>(null);
+  const activationRef = useRef<{ trigger: HTMLElement; event: MouseEvent } | null>(null);
+
+  const selectGuide = useCallback((selection: Open | null, repeat = false) => {
+    const previous = selectionRef.current;
+    if (!selection && !previous) return;
+    if (!repeat && selection && previous?.milestoneId === selection.milestoneId && previous.sectionId === selection.sectionId) return;
+
+    if (selection && !previous) {
+      const active = document.activeElement;
+      const activation = activationRef.current;
+      const trigger = activation && activation.event.eventPhase !== Event.NONE ? activation.trigger : null;
+      openerRef.current = trigger ?? (
+        active instanceof HTMLElement && active !== document.body && active !== document.documentElement ? active : null
+      );
+    }
+    const next = selection ? {
+      ...selection,
+      requestId: previous?.milestoneId === selection.milestoneId ? previous.requestId : ++sequence.current,
+    } : null;
+    selectionRef.current = next;
+    setOpen(next);
+  }, []);
 
   const openGuide = useCallback((milestoneId: string, sectionId?: string | null) => {
     const next: Open = { milestoneId, sectionId: sectionId ?? null };
-    pushed.current = true;
     const hash = `#m=${encodeURIComponent(milestoneId)}${
       sectionId ? `&s=${encodeURIComponent(sectionId)}` : ""
     }`;
-    window.history.pushState(null, "", hash);
-    setOpen(next);
-  }, [pushed]);
+    if (selectionRef.current) {
+      // Section changes belong to this opening; one Back still dismisses it.
+      window.history.replaceState(window.history.state, "", hash);
+    } else {
+      entryId.current = window.crypto.randomUUID();
+      window.history.pushState({ ...historyState(), __waymarkGuide: entryId.current }, "", hash);
+    }
+    selectGuide(next, true);
+  }, [selectGuide]);
 
   const closeGuide = useCallback(() => {
-    if (pushed.current) {
-      pushed.current = false;
+    if (!selectionRef.current || closing.current) return;
+    if (entryId.current && historyState().__waymarkGuide === entryId.current) {
+      closing.current = true;
       window.history.back();
       return;
     }
-    setOpen(null);
-  }, [pushed]);
+    // A shared URL has no locally-created entry to go back to. Clear only the
+    // guide parameters, without sending the student to a previous website.
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.hash.slice(1));
+    params.delete("m");
+    params.delete("s");
+    url.hash = params.toString();
+    const state = { ...historyState() };
+    delete state.__waymarkGuide;
+    window.history.replaceState(state, "", `${url.pathname}${url.search}${url.hash}`);
+    selectGuide(null);
+  }, [selectGuide]);
 
   // A link that lands on a page with a section hash opens that section.
   useEffect(() => {
     const sync = () => {
-      const parsed = parseHash(window.location.hash);
-      if (parsed) setOpen(parsed);
-      else setOpen(null);
+      closing.current = false;
+      selectGuide(parseHash(window.location.hash));
+    };
+    // Safari need not focus a button on pointer activation. Capture the actual
+    // trigger before React's onClick, rather than restoring an unrelated link.
+    const rememberActivation = (event: MouseEvent) => {
+      const trigger = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-guide-link]") : null;
+      // eventPhase becomes NONE after dispatch; later hash changes must not
+      // accidentally reuse this activation. No timer survives a close/unmount.
+      activationRef.current = trigger ? { trigger, event } : null;
     };
     sync();
     window.addEventListener("popstate", sync);
     window.addEventListener("hashchange", sync);
+    document.addEventListener("click", rememberActivation, true);
     return () => {
       window.removeEventListener("popstate", sync);
       window.removeEventListener("hashchange", sync);
+      document.removeEventListener("click", rememberActivation, true);
+      activationRef.current = null;
     };
-  }, []);
+  }, [selectGuide]);
 
-  // The dossier text is a lot of static content, so it is fetched the first
-  // time a student opens one rather than on every page load.
+  // Fetch each opening without a permanent client cache so admin publications
+  // become visible on the next open, not only after a hard reload.
+  const milestoneId = open?.milestoneId;
+  const requestId = open?.requestId;
   useEffect(() => {
-    if (!open) return;
-    const milestoneId = open.milestoneId;
+    if (!milestoneId || requestId === undefined) return;
     let cancelled = false;
-    import("@/lib/engine/guides/content")
-      .then((mod) => mod.guideFor(milestoneId))
-      .then((guide) => {
+    const controller = new AbortController();
+    fetch(`/api/guides/${encodeURIComponent(milestoneId)}`, { cache: "no-store", credentials: "same-origin", signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Guide request failed.");
+        const value: unknown = await response.json();
+        return parseGuideResponse(milestoneId, value);
+      }).then((guide) => {
         if (cancelled) return;
-        setLoaded({ id: milestoneId, guide });
+        setLoaded({ requestId, guide });
       })
       .catch(() => {
         if (cancelled) return;
-        setLoaded({ id: milestoneId, guide: null });
+        setLoaded({ requestId, guide: null });
       });
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [open]);
+  }, [milestoneId, requestId]);
 
-  const guide = loaded && open && loaded.id === open.milestoneId ? loaded.guide : null;
-  const loading = Boolean(open) && (!loaded || loaded.id !== open?.milestoneId);
-
-  // The page behind the sheet must not scroll under it.
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [open]);
+  const guide = open && loaded?.requestId === open.requestId ? loaded.guide : null;
+  const loading = Boolean(open) && loaded?.requestId !== requestId;
 
   const value = useMemo(
     () => ({ open, openGuide, closeGuide }),
@@ -139,6 +192,8 @@ export default function GuideProvider({
         loading={loading}
         steps={steps}
         onClose={closeGuide}
+        onSelectSection={openGuide}
+        returnFocusRef={openerRef}
       />
     </GuideContext.Provider>
   );

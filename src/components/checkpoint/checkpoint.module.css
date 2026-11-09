@@ -1,0 +1,39 @@
+.panel {
+  min-width: 0;
+  margin-top: 1rem;
+  border-top: 1px solid var(--rule);
+  color: var(--color-forest);
+}
+.summary {
+  width: fit-content;
+  padding: 0.7rem 0;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.content { max-width: 68ch; padding: 0 0 0.85rem; }
+.heading { margin: 1.1rem 0 0.4rem; font-size: 0.875rem; font-weight: 600; }
+.note, .caution, .list, .form, .status { font-size: 0.8125rem; line-height: 1.6; }
+.note { color: var(--muted); }
+.caution { margin-block: 0.4rem; color: var(--color-signal); }
+.list { padding-left: 1.25rem; overflow-wrap: anywhere; }
+.list li { padding: 0.25rem 0; }
+.list a { color: inherit; text-decoration: underline; }
+.form { display: grid; gap: 0.35rem; margin-top: 0.85rem; }
+.form label { font-weight: 500; }
+.form input, .form textarea {
+  width: 100%; min-width: 0; padding: 0.5rem 0.65rem;
+  border: 1px solid var(--rule-strong); border-radius: 0.35rem;
+  background: var(--color-porcelain); color: var(--color-forest);
+  font: inherit;
+}
+.button {
+  width: fit-content; min-height: 2.5rem; padding: 0.45rem 0.8rem;
+  border: 1px solid var(--color-forest); border-radius: 999px;
+  background: transparent; color: var(--color-forest); cursor: pointer;
+  font: inherit; font-size: 0.8125rem; font-weight: 500;
+}
+.button:disabled { cursor: not-allowed; opacity: 0.5; }
+.button:hover:not(:disabled) { background: var(--color-forest); color: var(--color-porcelain); }
+.status:empty { display: none; }

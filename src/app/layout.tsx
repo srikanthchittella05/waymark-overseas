@@ -6,7 +6,9 @@ import MotionProvider from "@/components/providers/MotionProvider";
 import { GsapProvider } from "@/components/providers/GsapProvider";
 import CustomCursor from "@/components/ui/CustomCursor";
 import SiteNavigation from "@/components/landing/SiteNavigation";
+import SiteFooter from "@/components/layout/SiteFooter";
 import { ARRIVAL_BOOTSTRAP } from "@/lib/arrival-bootstrap";
+import { ProfileProvider } from "@/lib/engine/profile";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -30,7 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a className="skip-link" href="#main-content">Skip to content</a>
               <CustomCursor />
               <SiteNavigation />
-              <main id="main-content" tabIndex={-1}>{children}</main>
+              <main id="main-content" tabIndex={-1}>
+                <ProfileProvider>{children}</ProfileProvider>
+              </main>
+              <SiteFooter />
             </SmoothScroll>
           </GsapProvider>
         </MotionProvider>

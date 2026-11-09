@@ -7,7 +7,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CustomEase } from "gsap/CustomEase";
 import { useGSAP } from "@gsap/react";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
-import { usePlan, usePlanActions } from "@/lib/engine/profile";
+import { usePlan, usePlanActions, useProfile } from "@/lib/engine/profile";
+import PlanPersistenceNotice, { usePlanWriteDisabled } from "@/components/account/PlanPersistenceNotice";
+import CheckpointPanel from "@/components/checkpoint/CheckpointPanel";
 import type { Plan, PlanStep } from "@/lib/engine/plan";
 import { formatPlanDate } from "@/lib/format-date";
 import GuideProvider from "@/components/guide/GuideProvider";
@@ -176,6 +178,8 @@ export default function TodayScreen({
 
 function TodayBody({ plan }: { plan: Plan }) {
   const { toggleStep, resetProgress } = usePlanActions();
+  const workspace = useProfile();
+  const writeDisabled = usePlanWriteDisabled();
   const blockedPanel = useRef<HTMLDivElement>(null);
   const heroPanel = useRef<HTMLElement>(null);
   const completePanel = useRef<HTMLElement>(null);
@@ -230,7 +234,7 @@ function TodayBody({ plan }: { plan: Plan }) {
     if (!request) return;
     pendingFocus.current = null;
     const active = document.activeElement;
-    if (active && active !== document.body && active !== document.documentElement) return;
+    if (active && active !== document.body && active !== document.documentElement && active.id !== "main-content") return;
     const target =
       request === "blocked"
         ? (blockedPanel.current ?? bandPanel.current)
@@ -251,18 +255,16 @@ function TodayBody({ plan }: { plan: Plan }) {
   const hero = plan.nextStep;
   const progressRatio = plan.counts.total === 0 ? 0 : plan.counts.done / plan.counts.total;
 
-  const markSettled = (id: string) => {
+  const markSettled = async (id: string, focus: FocusRequest) => {
     const step = stepById.get(id);
     if (!step) return;
-    toggleStep(id);
-    setAnnouncement(
-      `Marked ${step.title} done.${blocked?.subject ? ` ${blocked.subject.title} is no longer waiting on it.` : ""}`,
-    );
+    if (!await toggleStep(id)) return;
+    pendingFocus.current = focus;
+    setAnnouncement(`Marked ${step.title} done.`);
   };
 
   const resolveBlocker = (id: string) => {
-    pendingFocus.current = "blocked";
-    markSettled(id);
+    void markSettled(id, "blocked");
   };
 
   /*
@@ -271,8 +273,7 @@ function TodayBody({ plan }: { plan: Plan }) {
    * Anything else would advertise tracking this app does not do.
    */
   const settleHero = (id: string) => {
-    pendingFocus.current = "hero";
-    markSettled(id);
+    void markSettled(id, "hero");
   };
 
   return (
@@ -281,7 +282,6 @@ function TodayBody({ plan }: { plan: Plan }) {
         <p className="sr-only" role="status">
           {announcement}
         </p>
-
         <section className="today-head" aria-labelledby="today-title">
           <h1 className="today-title" id="today-title">
             <span className="today-mask">
@@ -300,11 +300,12 @@ function TodayBody({ plan }: { plan: Plan }) {
             </Link>
           </p>
         </section>
+        <PlanPersistenceNotice />
 
         {plan.untouched ? (
           <aside className="today-firstrun" aria-labelledby="firstrun-title" data-reveal>
             <h2 className="today-firstrun-title" id="firstrun-title">
-              Sample target, empty checklist.
+              {workspace.user ? "Choose your saved target." : "Sample target, temporary checklist."}
             </h2>
             {/* Not decoration: every date here is derived from a target nobody chose. */}
             <p>Every date on this page rebuilds from the target you set.</p>
@@ -347,7 +348,7 @@ function TodayBody({ plan }: { plan: Plan }) {
               <p className="today-clock-date">
                 {hero.daysUntil === 0
                   ? `Due today · ${formatPlanDate(hero.dueDate)}`
-                  : `${countdown(hero)} · due ${formatPlanDate(hero.dueDate)}`}
+                  : `Due ${formatPlanDate(hero.dueDate)}`}
                 {hero.hardDeadline ? " · hard deadline, dated by the school or authority" : ""}
               </p>
               <GuideLinks milestoneId={hero.id} className="today-hero-guides" />
@@ -404,18 +405,23 @@ function TodayBody({ plan }: { plan: Plan }) {
                 ))}
               </ul>
               <p className="today-work-foot">
-                These are the pieces, not separate ticks. Only the milestone is kept, and only in this
-                browser.
+                These are the pieces, not separate ticks. Signed-in plans save the milestone to your account;
+                preview changes are temporary.
               </p>
+              {hero.blockers.length ? <p className="today-work-foot">
+                Finish {hero.blockers.length} prerequisite{hero.blockers.length === 1 ? "" : "s"} before marking this milestone done.
+              </p> : null}
               <button
                 type="button"
                 className="today-pill today-pill-quiet"
                 data-focus="mark-done"
+                disabled={writeDisabled || hero.blockers.length > 0}
                 onClick={() => settleHero(hero.id)}
               >
                 <span className="today-pill-arrow"><Arrow /></span>
                 Mark this milestone done<span className="sr-only">: {hero.title}</span>
               </button>
+              <CheckpointPanel step={hero} />
             </div>
           </section>
         ) : (
@@ -437,14 +443,15 @@ function TodayBody({ plan }: { plan: Plan }) {
             <button
               type="button"
               className="today-pill today-pill-quiet"
-              onClick={() => {
+              disabled={writeDisabled}
+              onClick={async () => {
                 if (!confirmReset) {
                   setConfirmReset(true);
                   return;
                 }
                 setConfirmReset(false);
+                if (!await resetProgress()) return;
                 pendingFocus.current = "hero";
-                resetProgress();
                 setAnnouncement("All ticks cleared. Your plan is back to the start.");
               }}
             >
@@ -471,7 +478,7 @@ function TodayBody({ plan }: { plan: Plan }) {
               </h2>
               <p className="today-blocked-copy">
                 Due {formatPlanDate(blocked.subject.dueDate)} — {countdown(blocked.subject)}. It cannot
-                start until the {countLabel(blocked.blockerIds.length, "step", "steps")} below{" "}
+                be marked done until the {countLabel(blocked.blockerIds.length, "step", "steps")} below{" "}
                 {blocked.blockerIds.length === 1 ? "is" : "are"} settled.
               </p>
             </div>
@@ -484,7 +491,8 @@ function TodayBody({ plan }: { plan: Plan }) {
                     <button
                       type="button"
                       className="today-chip"
-                      aria-label={`${dependency.title} Mark done, which unblocks ${blocked.subject.title}`}
+                      aria-label={`Mark ${dependency.title} done${dependency.blockers.length ? ` after its ${dependency.blockers.length} prerequisites` : ""}`}
+                      disabled={writeDisabled || dependency.blockers.length > 0}
                       onClick={() => resolveBlocker(id)}
                     >
                       <span className="today-chip-text">{dependency.title}</span>{" "}
@@ -497,50 +505,61 @@ function TodayBody({ plan }: { plan: Plan }) {
               })}
             </ul>
             <p className="today-blocked-foot">
-              Settling one of these re-derives the plan.{" "}
               <Link className="today-underline" href="/steps">
                 See the whole checklist <Arrow />
               </Link>
             </p>
+            {blocked.subject.id !== hero?.id ? <CheckpointPanel step={blocked.subject} /> : null}
           </section>
         ) : null}
 
         {atRisk.length > 0 ? (
           <section className="today-risk" data-reveal aria-labelledby="risk-title" ref={riskPanel} tabIndex={-1}>
             <div className="today-risk-head">
-              <h2 className="today-section-title" id="risk-title">
-                Past its date
-              </h2>
-              <p className="today-section-note">
-                {countLabel(atRisk.length, "milestone", "milestones")} past the date this plan
-                derived, still open.
-              </p>
+              <div>
+                <p className="today-risk-eyebrow">The date ledger / follow up</p>
+                <h2 className="today-risk-heading" id="risk-title">Past its <em>date.</em></h2>
+              </div>
+              <div className="today-risk-intro">
+                <span className="today-risk-count" aria-hidden="true">{String(atRisk.length).padStart(2, "0")}</span>
+                <p>{countLabel(atRisk.length, "milestone", "milestones")} past the date this plan
+                  derived, still open. The date is a planning guide, not a new deadline.</p>
+              </div>
             </div>
             <ul className="today-risk-list">
-              {visibleRisk.map((step) => (
+              {visibleRisk.map((step, index) => (
                 <li className="today-risk-item" key={step.id}>
-                  <p className="today-risk-phase">
-                    {step.phase} · <span className="today-risk-late">{countdown(step)}</span>
-                  </p>
-                  <h3 className="today-risk-title">{step.title}</h3>
-                  <p className="today-risk-date">
-                    Due {formatPlanDate(step.dueDate)} · {Math.abs(step.daysUntil)}{" "}
-                    {Math.abs(step.daysUntil) === 1 ? "day" : "days"} past
-                  </p>
-                  <GuideLinks milestoneId={step.id} className="today-risk-guides" />
-                  <button
-                    type="button"
-                    className="today-risk-done"
-                    onClick={() => {
-                      // Settling a row removes it from this list, so focus has to land here.
-                      pendingFocus.current = "risk";
-                      toggleStep(step.id);
-                      setAnnouncement(`Marked ${step.title} done.`);
-                    }}
-                  >
-                    <span className="today-risk-done-mark" aria-hidden="true">✓</span>
-                    Mark done<span className="sr-only">: {step.title}</span>
-                  </button>
+                  <span className="today-risk-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                  <div className="today-risk-story">
+                    <p className="today-risk-phase">
+                      {step.phase} <span className="today-risk-late">/ {countdown(step)}</span>
+                    </p>
+                    <h3 className="today-risk-title">{step.title}</h3>
+                    <p className="today-risk-date">Due <time dateTime={step.dueDate}>{formatPlanDate(step.dueDate)}</time></p>
+                  </div>
+                  <div className="today-risk-resources">
+                    <p className="today-risk-resources-label">A way forward</p>
+                    <GuideLinks milestoneId={step.id} className="today-risk-guides" />
+                    {step.blockers.length ? <p className="today-risk-gate">Finish {step.blockers.length} prerequisite{step.blockers.length === 1 ? "" : "s"} before marking done.</p> : null}
+                    <div className="today-risk-actions">
+                      <button
+                        type="button"
+                        className="today-risk-done"
+                        disabled={writeDisabled || step.blockers.length > 0}
+                        onClick={async () => {
+                          // Settling a row removes it from this list, so focus has to land here.
+                          if (!await toggleStep(step.id)) return;
+                          pendingFocus.current = "risk";
+                          setAnnouncement(`Marked ${step.title} done.`);
+                        }}
+                      >
+                        <span className="today-risk-done-mark" aria-hidden="true">✓</span>
+                        Mark done<span className="sr-only">: {step.title}</span>
+                      </button>
+                      {step.blockers.length ? <Link className="today-underline" href="/steps">See prerequisites <Arrow /></Link> : null}
+                    </div>
+                    {step.id !== blocked?.subject.id ? <CheckpointPanel step={step} /> : null}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -574,7 +593,7 @@ function TodayBody({ plan }: { plan: Plan }) {
               <strong>{plan.counts.risk}</strong> past {plan.counts.risk === 1 ? "its date" : "their date"}
             </span>
             <span aria-hidden="true">·</span>
-            <span>stored in this browser only</span>
+            <span>{workspace.user ? "saved per intake in your account" : "temporary preview · not saved"}</span>
           </p>
 
           <div

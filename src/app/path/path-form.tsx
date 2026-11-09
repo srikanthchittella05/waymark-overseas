@@ -20,10 +20,12 @@ import {
 import { usePlan, usePlanActions, useProfile } from "@/lib/engine/profile";
 import { formatPlanDate } from "@/lib/format-date";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
+import PlanPersistenceNotice from "@/components/account/PlanPersistenceNotice";
+import { resolveDeadlineOverrides } from "@/lib/workspace/types";
 import CountryGallery from "./CountryGallery";
 
 /*
- * Four questions, and the reason the screen exists: making the consequence of
+ * Target inputs, and the reason the screen exists: making the consequence of
  * an answer visible *before* it is committed. The draft target goes through the
  * same engine as the saved one, so the panel is the real plan rather than a
  * summary of one.
@@ -129,9 +131,11 @@ export default function PathForm({ initialTarget }: {
 }) {
   const screenRef = useRef<HTMLDivElement | null>(null);
   const { shouldAnimate } = useMotionPreferences();
-  const { profile, done } = useProfile();
+  const workspace = useProfile();
+  const { profile, done } = workspace;
   const savedPlan = usePlan();
-  const { setStage, setTarget, resetProgress, resetAll } = usePlanActions();
+  const { setTarget, resetProgress } = usePlanActions();
+  const writeDisabled = !workspace.ready || workspace.mode === "error" || workspace.sync === "saving";
 
   const options = useMemo(() => countryOptions(), []);
   /* The engine's "today", recovered from its own arithmetic rather than read
@@ -161,28 +165,31 @@ export default function PathForm({ initialTarget }: {
     activeOption.intakes.find((intake) => intake.id === draft.intakeId) ??
     activeOption.intakes[0];
 
-  const draftPlan = useMemo(() => buildPlan(draft, done), [draft, done]);
+  const draftPlan = useMemo(() => buildPlan(draft,
+    draft.countryCode === profile.countryCode && draft.intakeId === profile.intakeId ? done : {},
+    undefined, resolveDeadlineOverrides(workspace.deadlineRevisions, draft.intakeId)), [draft, done, profile, workspace.deadlineRevisions]);
   const dirty =
     draft.stage !== profile.stage ||
     draft.countryCode !== profile.countryCode ||
-    draft.intakeId !== profile.intakeId;
+    draft.intakeId !== profile.intakeId || Boolean(workspace.user && !workspace.hasSavedTarget);
 
   const intakeRows = useMemo(
     () =>
       activeOption.intakes.map((intake) => {
-        const plan = buildPlan({ ...draft, intakeId: intake.id }, done);
+        const plan = buildPlan({ ...draft, intakeId: intake.id }, {}, undefined,
+          resolveDeadlineOverrides(workspace.deadlineRevisions, intake.id));
         return {
           intake,
           first: firstDueOf(plan),
           daysToStart: daysBetween(today, intake.startDate),
         };
       }),
-    [activeOption, draft, done, today],
+    [activeOption, draft, today, workspace.deadlineRevisions],
   );
 
   const [notice, setNotice] = useState("");
   const [resetNotice, setResetNotice] = useState("");
-  const [confirming, setConfirming] = useState<"progress" | "all" | null>(null);
+  const [confirming, setConfirming] = useState<"progress" | null>(null);
 
   /* Every confirmation on this screen replaces the button that was pressed: the
      submit turns into a disabled "already saved", Discard unmounts, and each
@@ -194,8 +201,7 @@ export default function PathForm({ initialTarget }: {
   const resetStatus = useRef<HTMLParagraphElement>(null);
   const dangerAsk = useRef<HTMLParagraphElement>(null);
   const clearAgain = useRef<HTMLButtonElement>(null);
-  const eraseAgain = useRef<HTMLButtonElement>(null);
-  const focusNext = useRef<"confirm" | "reset" | "ask" | "clear" | "erase" | null>(null);
+  const focusNext = useRef<"confirm" | "reset" | "ask" | "clear" | null>(null);
 
   useEffect(() => {
     const wanted = focusNext.current;
@@ -208,9 +214,7 @@ export default function PathForm({ initialTarget }: {
           ? resetStatus.current
           : wanted === "ask"
             ? dangerAsk.current
-            : wanted === "clear"
-              ? clearAgain.current
-              : eraseAgain.current;
+            : clearAgain.current;
     target?.focus({ preventScroll: true });
   });
 
@@ -253,17 +257,16 @@ export default function PathForm({ initialTarget }: {
     });
   };
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!dirty) return;
+    if (!dirty || writeDisabled) return;
+    if (!await setTarget(draft.countryCode, draft.intakeId, draft.stage)) return;
     focusNext.current = "confirm";
-    setStage(draft.stage);
-    setTarget(draft.countryCode, draft.intakeId);
     setLinkedTarget(undefined);
     setNotice(
-      `Saved: ${activeOption.name} · ${activeIntake.label}, starting ${formatPlanDate(
+      `${workspace.user ? "Saved" : "Preview updated"}: ${activeOption.name} · ${activeIntake.label}, starting ${formatPlanDate(
         activeIntake.startDate,
-      )}. The route has been rebuilt from that date.`,
+      )}.${workspace.user ? " This intake keeps its own progress." : " Sign in to save this route; preview changes are temporary."}`,
     );
   };
 
@@ -341,7 +344,7 @@ export default function PathForm({ initialTarget }: {
       <header className="path-hero">
         <h1>
           <span className="pa-line">
-            <span>Four answers.</span>
+            <span>Choose your target.</span>
           </span>
           <span className="pa-line">
             <span>
@@ -350,13 +353,12 @@ export default function PathForm({ initialTarget }: {
           </span>
         </h1>
 
-        {/* One context line: the privacy fact, not a paragraph about the page. */}
-        <p className="path-context">Four questions · no account · nothing leaves this browser</p>
         {linkedTarget && <p className="pa-help">Your preview selection is here. It is not saved until you confirm.</p>}
       </header>
+      <PlanPersistenceNotice />
 
       <section className="path-section" aria-labelledby="path-questions">
-        <h2 id="path-questions">The four questions</h2>
+        <h2 id="path-questions">Your target</h2>
 
         <form className="path-form" onSubmit={onSubmit}>
           <div className="path-questions">
@@ -364,7 +366,7 @@ export default function PathForm({ initialTarget }: {
               <legend>01 — Where you are now</legend>
               {/* The one thing a student actually worries about here. */}
               <p className="pa-help" id="path-help-stage">
-                Saved on this device. It does not move a single date.
+                A description of your stage, not a shortcut that completes steps or moves dates.
               </p>
               <div className="pa-stage-rail">
                 {STAGES.map((stage) => (
@@ -503,8 +505,10 @@ export default function PathForm({ initialTarget }: {
                 <div>
                   <p className="pa-help">
                     {dirty
-                      ? "You have unsaved answers. Confirming replaces your saved target; the milestones you have already ticked off stay."
-                      : "These answers match your saved route. Change anything above and this comes back."}
+                      ? workspace.user
+                        ? "Confirming selects this intake's own plan. A previously saved intake restores its own progress; ticks are never copied between intakes."
+                        : "Preview this route without saving it. An account is required to keep a plan across visits or devices."
+                      : workspace.user ? "These answers match your saved route." : "These answers match your current temporary preview."}
                   </p>
                   <p className="pa-status" role="status" ref={confirmStatus} tabIndex={-1}>
                     {notice}
@@ -512,18 +516,18 @@ export default function PathForm({ initialTarget }: {
                 </div>
                 <div className="pa-actions">
                   {dirty ? (
-                    <button type="submit" className="pa-button">
+                    <button type="submit" className="pa-button" disabled={writeDisabled}>
                       <span aria-hidden="true">
                         <CheckMark />
                       </span>
-                      Confirm this route
+                      {workspace.sync === "saving" ? "Saving…" : workspace.user ? "Confirm this route" : "Preview this route"}
                     </button>
                   ) : (
                     <Link href="/today" className="pa-button">
                       <span aria-hidden="true">
                         <ArrowRight />
                       </span>
-                      See your plan
+                      {workspace.user ? "See your plan" : "See preview plan"}
                     </Link>
                   )}
                   {dirty ? (
@@ -534,7 +538,7 @@ export default function PathForm({ initialTarget }: {
                         focusNext.current = "confirm";
                         setPending(null);
                         setLinkedTarget(undefined);
-                        setNotice("Back to your saved route.");
+                      setNotice(workspace.user ? "Back to your saved route." : "Back to your current preview.");
                       }}
                     >
                       <span aria-hidden="true">
@@ -550,8 +554,7 @@ export default function PathForm({ initialTarget }: {
 
           <aside className="pa-preview" aria-label="What this target produces">
             <p className="eyebrow">
-              {dirty ? "If you confirm" : "Your current route"} · built by the
-              engine
+              {dirty ? "If you confirm" : "Your current route"}
             </p>
 
             {/* Key only the changed facts, keeping the caveat and link mounted. */}
@@ -695,44 +698,43 @@ export default function PathForm({ initialTarget }: {
         <div className="pa-privacy">
           <div>
             <p className="path-intro">
-              There is no account here and no server holding your answers. Your
-              stage, your target and every milestone you tick off are read from and
-              written to this browser&rsquo;s local storage, on this device.
+              Guest previews stay in memory and are not uploaded. Sign in to save
+              your target and completed milestones to your Waymark account.
             </p>
             <ul className="pa-privacy-points">
               <li>
                 <span>
-                  Nothing is uploaded, nobody else can see it, and there is no third
-                  party anywhere in the loop.
+                  Account data is scoped to your user and intake. Another user cannot
+                  read your saved plan. Essential session cookies keep you signed in.
                 </span>
               </li>
               <li>
-                <span>It works offline, and no cookie or tracker is involved in reading it.</span>
+                <span>Cloud changes require a connection. A failed save is shown as an error, never as success.</span>
               </li>
             </ul>
           </div>
           <div>
             {/* The honest cost of that privacy. None of this is decoration. */}
             <p className="path-intro">
-              It stays on your device — which cuts both ways.
+              Each intake keeps a separate checklist.
             </p>
             <ul className="pa-privacy-points">
               <li>
                 <span>
-                  It is one device. Your phone, your laptop&rsquo;s other browser
-                  profile or a shared computer starts completely empty.
+                  Sign in to the same account on another device to read your saved
+                  plans. Signing out does not delete cloud progress.
                 </span>
               </li>
               <li>
                 <span>
-                  There is no sync and no backup. Clearing your browsing data erases
-                  the plan, and there is nothing left to restore it from.
+                  Clearing browser data removes your local session, not your cloud
+                  plan. Unsaved guest previews disappear on reload.
                 </span>
               </li>
             </ul>
             <p className="pa-privacy-caveat">
-              Take a screenshot of your route before you clear anything. That is
-              the only copy that exists.
+              Older browser-only progress is never imported automatically. Review and
+              import it from your account page after signing in.
             </p>
           </div>
         </div>
@@ -764,9 +766,10 @@ export default function PathForm({ initialTarget }: {
                     <button
                       type="button"
                       className="pa-button-danger pa-button-danger-solid"
-                      onClick={() => {
+                      disabled={writeDisabled || Boolean(workspace.user && !workspace.planId)}
+                      onClick={async () => {
+                        if (!await resetProgress()) return;
                         focusNext.current = "clear";
-                        resetProgress();
                         setConfirming(null);
                         setResetNotice("Progress cleared. Your target is unchanged.");
                       }}
@@ -794,6 +797,7 @@ export default function PathForm({ initialTarget }: {
                     type="button"
                     className="pa-button-danger"
                     ref={clearAgain}
+                    disabled={writeDisabled || ticked === 0}
                     onClick={() => {
                       focusNext.current = "ask";
                       setResetNotice("");
@@ -810,79 +814,7 @@ export default function PathForm({ initialTarget }: {
             </div>
           </div>
 
-          <div className="pa-danger-row">
-            <div>
-              <span className="pa-danger-tag">
-                <span aria-hidden="true">
-                  <WarnMark />
-                </span>
-                Destructive · erases your target too
-              </span>
-              <h3>Erase everything</h3>
-              <p>
-                Resets your target as well as your progress, back to the default
-                United States · Fall 2027. Every date you chose by hand goes with
-                it.
-              </p>
-            </div>
-            <div>
-              {confirming === "all" ? (
-                <>
-                  <p className="pa-confirm-ask" role="alert" ref={dangerAsk} tabIndex={-1}>
-                    Erase your target and all progress? This cannot be undone.
-                  </p>
-                  <div className="pa-danger-actions">
-                    <button
-                      type="button"
-                      className="pa-button-danger pa-button-danger-solid"
-                      onClick={() => {
-                        focusNext.current = "erase";
-                        resetAll();
-                        setLinkedTarget(undefined);
-                        setConfirming(null);
-                        setResetNotice(
-                          "Everything erased — your target and every ticked milestone are gone.",
-                        );
-                      }}
-                    >
-                      <span aria-hidden="true">
-                        <CloseMark />
-                      </span>
-                      Yes, erase everything
-                    </button>
-                    <button
-                      type="button"
-                      className="pa-button-danger"
-                      onClick={() => {
-                        focusNext.current = "erase";
-                        setConfirming(null);
-                      }}
-                    >
-                      Keep it
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="pa-danger-actions">
-                  <button
-                    type="button"
-                    className="pa-button-danger"
-                    ref={eraseAgain}
-                    onClick={() => {
-                      focusNext.current = "ask";
-                      setResetNotice("");
-                      setConfirming("all");
-                    }}
-                  >
-                    <span aria-hidden="true">
-                      <WarnMark />
-                    </span>
-                    Erase everything
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+          <p className="pa-privacy-caveat">Clearing this checklist does not delete your account or any other intake&rsquo;s plan. <Link href="/account">Manage your account</Link>.</p>
 
           <p className="pa-danger-status" role="status" ref={resetStatus} tabIndex={-1}>
             {resetNotice}

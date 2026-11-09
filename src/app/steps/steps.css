@@ -412,6 +412,7 @@
   border-inline-start: 0;
   transform: rotate(42deg);
 }
+.steps-box:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .steps-row-summary {
   max-width: 62ch;
@@ -571,6 +572,7 @@
   font-weight: 500;
   color: var(--muted);
 }
+.steps-checkpoint { margin-left: calc(1.3rem + 0.9rem); }
 
 /* -------------------------------- band --------------------------------- */
 

@@ -1,13 +1,17 @@
 # Waymark
 
+**Current progress and resume point:** [Checkpoint — 27 October 2026](CHECKPOINT.md).
+
 **Every step, marked.**
 
 Waymark turns "I want to study abroad" into a dated plan. Pick a destination and an
 intake, and every deadline is counted back from departure so you always know what is
 next, why it matters now, and what is standing in the way.
 
-Nothing is stored on a server. There is no account. Your answers and your ticks live
-in this browser only.
+The public planner works without an account. Guest answers and ticks are temporary,
+in-memory previews and disappear on reload. Cloud saving requires a dedicated,
+configured Waymark account service; the unconfigured environment does not simulate
+sign-in or uploads. See [accounts and administration](docs/accounts-admin-plan.md).
 
 ## The four screens
 
@@ -20,7 +24,8 @@ in this browser only.
 
 ## How it works
 
-The engine in `src/lib/engine/` is the product. It does not fetch anything at runtime.
+The pure engine in `src/lib/engine/plan.ts` derives the dated plan. Account persistence
+and published content are separate runtime boundaries, not engine side effects.
 
 - **`country-cycles.ts`** — 104 researched milestones across the US, UK, Canada, Australia,
   Germany, France and Singapore. Every milestone carries a confidence flag and a source URL:
@@ -36,8 +41,12 @@ The engine in `src/lib/engine/` is the product. It does not fetch anything at ru
   of `done`, `now`, `next`, `later` or `risk`. Status is *earned* from what you have ticked
   and what is still blocking each step; nothing is hardcoded.
 
-- **`profile.ts`** — a small localStorage store. No account, no sync, no server. Clearing
-  this browser's data erases it.
+- **`profile.ts` / `workspace/store.ts`** — a per-mounted workspace store. Guest changes
+  stay in memory; signed-in changes use authenticated workspace endpoints. Each intake
+  has its own progress. Legacy browser-only progress is imported only after review.
+- **`/api/guides/[milestoneId]`** — bundled guides in an unconfigured preview; validated
+  published revisions when the dedicated content service is connected. Missing published
+  content fails explicitly instead of substituting an unpublished guide.
 
 The domain knowledge the engine encodes: the US, Canada and Australia are **rolling**;
 the UK, Singapore, Germany and France are **fixed**. Alongside that sit the gotchas that
@@ -50,7 +59,7 @@ Housing is marked `estimate`. No central source publishes a housing deadline any
 ## Running it
 
 ```bash
-npm install
+npm ci
 npm run dev      # http://localhost:3200
 ```
 
@@ -143,14 +152,17 @@ quieter mode, including live preference changes. There is no in-page pause butto
 
 - **Entry:** a forest aperture opens around the actual satin-ribbon infinity as it
   turns into the hero position. Approximately 2.5 seconds of overlapping choreography;
-  the material gets at most a 1-second readiness window. A 4.5-second watchdog and any
+   unfolding waits for the first successful GPU draw, with no horizontal-poster swap.
+   A 4.5-second cosmetic watchdog and any
   input release it. **Every fresh document is a fresh entrance:** a reload always
   replays the whole reveal, from the opening state, and always begins at the top of
   the page rather than at the position the browser remembers. Deep links, browser-back
   and reduced motion bypass it.
-- **One visual thread:** on larger screens the same mesh travels from hero to manifesto,
-  opens into an orbit, then contracts as an evidence-backed dated route takes over.
-  Touch layouts keep unfolding and masked typography with native, non-pinned scrolling.
+- **One visual thread:** the same slanted infinity shrinks and morphs into a small
+  aeroplane (96px desktop / 64px mobile). Its center and heading follow the actual
+  SVG route through the second section into the sample plan, reversing with scroll.
+  Touch layouts carry the same object through native, non-pinned scrolling. Reduced
+  motion or unavailable WebGL uses the original infinity poster and a static aircraft.
 - **Product:** the real sample plan, four linked product views, destination parallax,
   masked closing, and finite interaction feedback all share a motion vocabulary.
 - **Navigation:** React ViewTransition provides a 720ms forest/oval handoff while the

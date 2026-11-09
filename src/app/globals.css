@@ -40,10 +40,11 @@
 :root {
   --paper: var(--color-porcelain);
   --field: var(--color-forest);
-  /* Sky supports information; suit red remains reserved for risk. */
+  /* Artwork sky: information and editorial light, never a competing primary CTA. */
   --color-sky-on-forest: color-mix(in srgb, var(--color-sky) 58%, var(--color-porcelain));
   --color-sky-ink: color-mix(in srgb, var(--color-forest) 55%, var(--color-sky));
   --color-sky-wash: color-mix(in srgb, var(--color-sky) 12%, var(--color-porcelain));
+  /* Artwork red stays tied to dates and caution, without another card outline. */
   --color-signal-wash: color-mix(in srgb, var(--color-signal) 8%, var(--color-halfwhite));
   --rule: color-mix(in srgb, currentColor 16%, transparent);
   --rule-strong: color-mix(in srgb, currentColor 30%, transparent);
@@ -222,6 +223,7 @@ html.lenis {
 .text-link {
   display: inline-flex;
   align-items: center;
+  min-height: 2.75rem;
   gap: 0.55rem;
   color: inherit;
   font-size: 0.9375rem;
@@ -247,24 +249,21 @@ html.lenis {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 50;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-forest) 12%, transparent);
+  background: color-mix(in srgb, var(--paper) 95%, transparent);
   transition: background 0.45s, border-color 0.45s, backdrop-filter 0.45s;
-  /*
-   * Scrolled, the header is 78%-alpha paper, so dark content shows through it.
-   * The site --muted (ink at 66%) measured 4.1:1 against that worst-case
-   * backdrop — below 4.5:1. Carrying the header's own alpha fixes it at 5.2:1.
-   */
+  /* Keep ink legible even as dark content scrolls beneath the paper header. */
   --muted: color-mix(in srgb, var(--color-ink) 78%, transparent);
 }
 .site-header.is-scrolled {
-  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
-  border-bottom-color: color-mix(in srgb, var(--color-forest) 10%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-forest) 18%, transparent);
 }
 
 .nav-inner {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   height: var(--header-h);
   padding-inline: var(--pad-x);
@@ -273,80 +272,90 @@ html.lenis {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.7rem;
   justify-self: start;
   color: inherit;
-  font-size: 1.0625rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.045em;
   text-decoration: none;
 }
 .brand svg {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   flex: none;
 }
 .brand-period {
-  color: color-mix(in srgb, var(--color-forest) 62%, transparent);
+  color: var(--color-ink-soft);
 }
-
-.nav-tagline {
-  justify-self: center;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 0.9375rem;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
 .nav-actions {
   display: flex;
   align-items: center;
   justify-self: end;
-  gap: clamp(0.5rem, 1.4vw, 1.5rem);
+  gap: clamp(0.25rem, 0.8vw, 0.65rem);
 }
 
 .nav-roadmap {
-  color: inherit;
+  color: var(--color-forest-deep);
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   text-decoration: none;
-  padding-bottom: 0.2rem;
-  border-bottom: 1px solid var(--rule);
-  transition: border-color 0.35s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.45rem 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: var(--color-acid);
 }
-.nav-roadmap:hover {
-  border-bottom-color: currentColor;
-}
-
-.menu-toggle {
+.nav-roadmap span {
   display: grid;
   place-content: center;
-  gap: 7px;
-  width: 44px;
-  height: 44px;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  background: var(--color-forest-deep);
+  color: var(--color-acid);
+  font-size: 1rem;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.nav-roadmap:is(:hover, :focus-visible) span { transform: rotate(45deg); }
+.nav-account { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.75rem; padding-inline: 0.6rem; font-size: 0.8125rem; text-decoration: none; }
+.nav-account svg { flex: none; }
+.nav-account:is(:hover, :focus-visible) span { text-decoration: underline; text-underline-offset: 0.3em; }
+
+.menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-width: 5.25rem;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
   border-radius: 999px;
+  background: var(--color-forest-deep);
+  color: var(--color-porcelain);
+  font-size: 0.8125rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.35s;
 }
-.menu-toggle:hover {
-  background: color-mix(in srgb, var(--color-forest) 7%, transparent);
+.menu-toggle-icon {
+  display: grid;
+  gap: 5px;
+  width: 16px;
 }
-.menu-toggle span {
+.menu-toggle-icon span {
   display: block;
-  width: 22px;
-  height: 1.5px;
+  width: 16px;
+  height: 1px;
   border-radius: 2px;
   background: currentColor;
-  transition: transform 0.4s var(--ease-out);
+  transition: transform var(--dur) var(--ease-brand);
 }
-.menu-toggle:hover span:first-child {
-  transform: translateY(3.5px) rotate(45deg);
-}
-.menu-toggle:hover span:last-child {
-  transform: translateY(-3.5px) rotate(-45deg);
-}
+.menu-toggle:is(:hover, :focus-visible) .menu-toggle-icon span:first-child { transform: translateX(-3px); }
+.menu-toggle:is(:hover, :focus-visible) .menu-toggle-icon span:last-child { transform: translateX(3px); }
 
 /* ---------------------------- menu ---------------------------- */
 
@@ -374,7 +383,7 @@ html.lenis {
   justify-content: space-between;
   gap: clamp(1.5rem, 3vh, 2.75rem);
   padding: clamp(1.1rem, 2.6vh, 1.75rem) var(--pad-x) clamp(1.75rem, 4vh, 3rem);
-  --muted: color-mix(in srgb, var(--color-porcelain) 58%, transparent);
+  --muted: color-mix(in srgb, var(--color-porcelain) 74%, transparent);
 }
 
 .menu-top {
@@ -382,6 +391,8 @@ html.lenis {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  padding-bottom: clamp(1rem, 2vw, 2rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-porcelain) 22%, transparent);
 }
 .menu-top .brand-period {
   color: color-mix(in srgb, var(--color-porcelain) 62%, transparent);
@@ -390,6 +401,7 @@ html.lenis {
 .menu-close {
   display: inline-flex;
   align-items: center;
+  min-height: 2.75rem;
   gap: 0.5rem;
   padding: 0.55rem 1.05rem;
   border-radius: 999px;
@@ -410,9 +422,13 @@ html.lenis {
 }
 
 .menu-links {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2.5rem, 9vw, 9rem);
 }
+.menu-group { min-width: 0; border-top: 1px solid color-mix(in srgb, var(--color-porcelain) 24%, transparent); padding-top: 1rem; }
+.menu-group-title { margin-bottom: 1rem; color: var(--color-acid); }
+.menu-group:last-child .menu-group-title { color: var(--color-sky-on-forest); }
 .menu-link {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -421,7 +437,7 @@ html.lenis {
   padding-block: clamp(0.5rem, 1.6vh, 1rem);
   border-bottom: 1px solid color-mix(in srgb, var(--color-porcelain) 14%, transparent);
   color: inherit;
-  font-size: clamp(2rem, 7vw, 5rem);
+  font-size: clamp(2rem, 4.6vw, 4.8rem);
   font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 1.02;
@@ -454,16 +470,17 @@ html.lenis {
 .menu-link[aria-current="page"] {
   color: var(--color-acid);
 }
+.menu-link[aria-current="page"] .menu-link-arrow { opacity: 1; transform: none; }
 
 .menu-bottom {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1.5rem;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 0.9375rem;
-  color: var(--muted);
+  padding-top: clamp(0.8rem, 1.6vw, 1.25rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-porcelain) 22%, transparent);
 }
+.menu-account-link { display: inline-flex; align-items: center; gap: 1.5rem; min-height: 2.75rem; color: var(--paper); font-family: var(--font-geist-sans), sans-serif; font-style: normal; font-size: 0.9375rem; text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--paper) 35%, transparent); }
+.menu-account-link span { color: var(--color-acid); }
 
 /* ---------------------------- hero ---------------------------- */
 
@@ -511,7 +528,7 @@ html[data-waymark-arrival="running"] .arrival-intro {
   position: absolute;
   inset: auto var(--pad-x) 1.75rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   color: var(--color-porcelain);
   font-size: 0.625rem;
@@ -527,8 +544,6 @@ html[data-waymark-arrival="pending"] .hero-art {
 }
 html[data-waymark-arrival="pending"] .hero,
 html[data-waymark-arrival="running"] .hero { overflow: visible; }
-html[data-waymark-arrival="pending"] .art-coordinate,
-html[data-waymark-arrival="pending"] .art-annotation { visibility: hidden; }
 html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb, var(--paper) 14%, transparent); }
 
 .mask-line {
@@ -624,8 +639,7 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
   /*
    * The svh term is load-bearing. At 58vw/46rem alone the box is an unscaled
    * square, so on a short viewport its bottom-left corner lands inside the
-   * hero-bottom row and the annotation ("Infinite possibilities…") is hidden
-   * behind the CTA. Verified across 12 desktop viewports; 64svh clears all.
+   * hero-bottom row. Keep the art clear of the CTA on short desktop layouts.
    */
   width: min(58vw, 46rem, 64svh);
   aspect-ratio: 1;
@@ -665,35 +679,6 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
 }
 .hero-art.scene-is-ready .sculpture-fallback {
   opacity: 0;
-}
-
-.art-annotation {
-  position: absolute;
-  z-index: 3;
-  /* Clear the inherited inset: 0 or the box stretches to full height. */
-  inset: auto auto 2% -2%;
-  display: flex;
-  gap: 0.7rem;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 0.9375rem;
-  line-height: 1.45;
-  color: var(--muted);
-}
-.art-annotation > span {
-  flex: none;
-  width: 2.25rem;
-  height: 1px;
-  margin-top: 0.62em;
-  background: var(--rule-strong);
-}
-
-.art-coordinate {
-  position: absolute;
-  z-index: 3;
-  inset: 1% 2% auto auto;
-  text-align: right;
-  line-height: 1.6;
 }
 
 .hero-bottom {
@@ -790,16 +775,6 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
   50% {
     transform: translateY(3.5px);
   }
-}
-
-.hero-rail {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding-top: clamp(0.75rem, 1.6vh, 1.15rem);
-  border-top: 1px solid var(--rule);
 }
 
 /* -------------------------- manifesto ------------------------- */
@@ -934,16 +909,6 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
 .destinations-intro h2 .serif {
   color: var(--color-acid);
 }
-.destinations-intro p {
-  margin-bottom: 0.75rem;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: clamp(0.95rem, 1.3vw, 1.2rem);
-  line-height: 1.45;
-  color: var(--muted);
-  text-align: right;
-}
-
 .gallery-hint {
   display: inline-flex;
   align-items: center;
@@ -1016,35 +981,27 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
   position: absolute;
   inset: clamp(0.85rem, 1.6vw, 1.4rem) clamp(0.85rem, 1.6vw, 1.4rem) auto;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   color: var(--color-porcelain);
 }
 .destination-copy {
   position: absolute;
   inset: auto clamp(0.85rem, 1.6vw, 1.4rem) clamp(0.9rem, 1.8vw, 1.6rem);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
 }
 .destination-copy .eyebrow {
   color: var(--color-porcelain);
 }
 .destination-copy h3 {
-  margin-block: 0.35rem 0.5rem;
+  margin: 0;
   font-size: clamp(1.6rem, 3.4vw, 3.1rem);
   font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 1;
-}
-.destination-copy > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.destination-copy p {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
-  color: color-mix(in srgb, var(--color-porcelain) 90%, transparent);
 }
 .destination-arrow {
   display: grid;
@@ -1145,66 +1102,163 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
   color: var(--muted);
 }
 
-.landing-footer {
-  border-top: 1px solid var(--rule);
+.site-footer {
+  background: var(--color-forest-deep);
+  color: var(--color-porcelain);
+  --rule: color-mix(in srgb, var(--color-porcelain) 24%, transparent);
+  --muted: color-mix(in srgb, var(--color-porcelain) 76%, transparent);
 }
+.site-footer :focus-visible { outline-color: var(--color-acid); }
+.footer-inner { padding-inline: var(--pad-x); }
+.footer-ledger {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+  padding-block: clamp(1.3rem, 2.6vw, 2rem);
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.footer-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: clamp(3rem, 8vw, 10rem);
+  padding-block: clamp(3.5rem, 7vw, 7rem);
+}
+.footer-invitation h2 {
+  font-size: clamp(2.9rem, 6.8vw, 7.5rem);
+  font-weight: 500;
+  letter-spacing: -0.065em;
+  line-height: 0.95;
+  text-wrap: balance;
+}
+.footer-invitation h2 em {
+  color: var(--color-acid);
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+}
+.footer-invitation p {
+  max-width: 32ch;
+  margin-top: clamp(1rem, 2vw, 1.75rem);
+  color: var(--muted);
+  font-size: clamp(0.9375rem, 1.3vw, 1.125rem);
+  line-height: 1.6;
+}
+.footer-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  min-height: 3.25rem;
+  margin-top: clamp(1.75rem, 3vw, 2.75rem);
+  padding: 0.5rem 0.6rem 0.5rem 1.35rem;
+  border: 1px solid var(--color-acid);
+  border-radius: 999px;
+  background: var(--color-acid);
+  color: var(--color-forest-deep);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer-cta span {
+  display: grid;
+  place-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--color-forest-deep);
+  color: var(--color-acid);
+  font-size: 1.15rem;
+  transition: transform var(--dur) var(--ease-brand);
+}
+.footer-cta:is(:hover, :focus-visible) span { transform: rotate(45deg); }
+.footer-directory {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-content: start;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  padding-top: 0.4rem;
+}
+.footer-directory-group { min-width: 0; }
+.footer-label {
+  margin-bottom: 1.25rem;
+  color: var(--color-acid);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.footer-directory-group:last-child .footer-label { color: var(--color-sky-on-forest); }
+.footer-directory a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+.footer-directory a span {
+  color: var(--color-acid);
+  transition: transform var(--dur) var(--ease-brand);
+}
+.footer-directory a:is(:hover, :focus-visible) span { transform: translate(2px, -2px); }
 .footer-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding-block: clamp(1.5rem, 4vw, 3rem);
+  padding-block: clamp(1.5rem, 3.5vw, 3rem);
+  border-top: 1px solid var(--rule);
 }
 .footer-wordmark {
   color: inherit;
-  font-size: clamp(2.4rem, 10vw, 8.5rem);
+  font-size: clamp(2.9rem, 12vw, 11rem);
   font-weight: 500;
   letter-spacing: -0.055em;
   line-height: 0.9;
   text-decoration: none;
 }
 .footer-wordmark span {
-  color: color-mix(in srgb, var(--field) 58%, transparent);
+  color: var(--color-acid);
 }
 .footer-mark {
   flex: none;
-  width: clamp(2rem, 4vw, 3.5rem);
+  width: clamp(2rem, 5vw, 4.5rem);
   height: auto;
-  color: var(--field);
-  opacity: 0.35;
+  color: var(--color-acid);
 }
 .footer-bottom {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1.5rem;
-  padding-block: clamp(1rem, 2vw, 1.5rem);
+  gap: 0.75rem 2rem;
+  padding-block: clamp(1.25rem, 2vw, 1.75rem);
   border-top: 1px solid var(--rule);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
-.footer-bottom nav {
-  display: flex;
-  gap: clamp(0.9rem, 2vw, 1.75rem);
-}
 .footer-bottom a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   color: inherit;
   text-decoration: none;
-  transition: color 0.3s;
 }
-.footer-bottom a:hover {
-  color: var(--color-forest-deep);
-}
-.footer-bottom > span:last-child {
-  justify-self: end;
-}
-
+.footer-bottom a:is(:hover, :focus-visible) { color: var(--color-acid); }
 /* =========================== responsive ======================= */
 
 @media (max-width: 1100px) {
+  .nav-account { width: 2.75rem; justify-content: center; padding: 0; }
+  .nav-account span { display: none; }
   .hero-art {
-    /* svh guard again — this override would otherwise drop it and let the
-       annotation collide with the bottom row around 1024x768. */
+    /* Retain the svh guard so the art clears the bottom row on short screens. */
     width: min(64vw, 40rem, 64svh);
     left: 55%;
   }
@@ -1217,13 +1271,6 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
   :root {
     --header-h: 4.25rem;
     --pad-y: clamp(2.75rem, 8vw, 4.5rem);
-  }
-
-  .nav-tagline {
-    display: none;
-  }
-  .nav-inner {
-    grid-template-columns: 1fr auto;
   }
 
   /* The art becomes a real block in the flow instead of a hero overlay. */
@@ -1254,11 +1301,6 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
   .scroll-cue {
     justify-self: start;
   }
-  .hero-rail {
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
   .manifesto-grid,
   .manifesto-symbol {
     top: -0.4em;
@@ -1273,9 +1315,6 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
-  }
-  .destinations-intro p {
-    text-align: left;
   }
   .destination-viewport {
     overflow-x: auto;
@@ -1308,14 +1347,11 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
     align-items: flex-start;
     gap: 1.25rem;
   }
-  .footer-bottom {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: start;
-    gap: 0.85rem;
-  }
-  .footer-bottom > span:last-child {
-    justify-self: start;
-  }
+  .footer-body { grid-template-columns: minmax(0, 1fr); gap: 3rem; }
+  .footer-directory { max-width: 42rem; }
+  .footer-bottom { grid-template-columns: minmax(0, 1fr) auto; }
+  .footer-bottom > :nth-child(2) { grid-row: 2; }
+  .footer-bottom a { grid-column: 2; grid-row: 1 / 3; }
 }
 
 @media (max-width: 600px) {
@@ -1326,6 +1362,8 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
   .nav-roadmap {
     display: none;
   }
+  .menu-links { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+  .menu-group-title { margin-bottom: 0.5rem; }
   .arrival-rail { flex-direction: column; align-items: center; text-align: center; gap: 0.5rem; }
   .arrival-copy { top: 64%; }
 
@@ -1335,15 +1373,6 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
   .hero-art {
     width: min(100%, 24rem);
   }
-  .art-annotation {
-    inset: auto 0 -1.25rem 0;
-    font-size: 0.8125rem;
-  }
-  .art-coordinate {
-    inset: -1.5rem 0 auto auto;
-    font-size: 0.625rem;
-  }
-
   .section-label {
     flex-direction: column;
     gap: 0.3rem;
@@ -1353,12 +1382,23 @@ html[data-waymark-arrival="pending"] .orbital { border-color: color-mix(in srgb,
     font-size: clamp(1.6rem, 9vw, 2.4rem);
   }
   .menu-bottom {
-    flex-direction: column;
-    gap: 0.35rem;
+    justify-content: flex-start;
   }
+  .footer-ledger span:last-child { display: none; }
+  .footer-body { padding-block: 3rem 3.5rem; }
+  .footer-directory { gap: 1.3rem; }
+  .footer-label { min-height: 2.2rem; }
+  .footer-top { align-items: end; gap: 1rem; }
+  .footer-wordmark { font-size: clamp(2.3rem, 11vw, 3rem); }
+  .footer-mark { width: 2rem; }
+  .footer-bottom { grid-template-columns: minmax(0, 1fr); }
+  .footer-bottom > :nth-child(2),
+  .footer-bottom a { grid-column: 1; grid-row: auto; }
 }
 
 @media (max-width: 380px) {
+  .menu-toggle { min-width: 44px; width: 44px; padding-inline: 0; }
+  .menu-toggle-label { display: none; }
   .hero-title {
     font-size: clamp(2.3rem, 15vw, 3.2rem);
   }

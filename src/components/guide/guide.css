@@ -27,7 +27,9 @@
   display: inline-flex;
   align-items: baseline;
   gap: 0.4rem;
-  padding: 0;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0.125rem 0;
   border: 0;
   background: none;
   color: inherit;
@@ -43,6 +45,7 @@
 .guide-link:focus-visible {
   border-bottom-color: currentColor;
 }
+.guide-link:disabled { cursor: default; }
 .guide-link-arrow {
   color: inherit;
   opacity: 0.62;
@@ -54,6 +57,14 @@
 .guide-link:focus-visible .guide-link-arrow {
   opacity: 1;
 }
+.guide-section-links { margin: 0 0 2rem; }
+.guide-section-links [aria-current="location"] {
+  border-bottom-color: currentColor;
+  font-weight: 500;
+}
+@media (pointer: coarse) {
+  .guide-link { min-height: 44px; align-items: center; }
+}
 
 /* ── The sheet ─────────────────────────────────────────────────────────── */
 
@@ -61,7 +72,18 @@
   position: fixed;
   inset: 0;
   z-index: 90;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  color: inherit;
 }
+.guide-overlay::backdrop { background: transparent; }
 
 .guide-scrim {
   position: absolute;
@@ -84,6 +106,7 @@
   box-shadow: -1px 0 0 color-mix(in srgb, var(--color-forest) 14%, transparent);
   animation: guide-panel-in var(--dur-slow) var(--ease-brand) both;
 }
+.guide-panel:focus-visible { outline-offset: -3px; }
 
 /* The wipe echoes the arrival aperture: the world opens from one side. */
 @keyframes guide-panel-in {
@@ -107,6 +130,7 @@
   position: relative;
   flex: 0 0 auto;
   padding: 1.6rem clamp(1.25rem, 4vw, 3rem) 1.15rem;
+  padding-right: calc(clamp(1.25rem, 4vw, 3rem) + 5.5rem);
   border-bottom: 1px solid color-mix(in srgb, var(--color-forest) 12%, transparent);
 }
 
@@ -136,6 +160,8 @@
   font-size: 0.8125rem;
 }
 .guide-meta a {
+  display: inline-block;
+  min-height: 24px;
   color: var(--color-ink-soft);
   text-decoration: underline;
   text-underline-offset: 0.2em;
@@ -160,6 +186,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0.4rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--color-forest) 22%, transparent);
   border-radius: 999px;
@@ -178,8 +206,11 @@
 }
 
 .guide-body-scroll {
+  position: relative;
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  scroll-behavior: auto;
   padding: 1.75rem clamp(1.25rem, 4vw, 3rem) 4rem;
   overscroll-behavior: contain;
 }
@@ -322,6 +353,8 @@
   font-size: 0.8125rem;
 }
 .guide-exam-source a {
+  display: inline-block;
+  min-height: 24px;
   color: var(--color-ink-soft);
   text-decoration: underline;
   text-underline-offset: 0.2em;
@@ -446,6 +479,8 @@
   font-weight: 500;
 }
 .guide-resource-title a {
+  display: inline-block;
+  min-height: 24px;
   color: var(--color-ink);
   text-decoration: underline;
   text-underline-offset: 0.2em;

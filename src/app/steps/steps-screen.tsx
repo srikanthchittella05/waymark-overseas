@@ -13,6 +13,8 @@ import type { Confidence } from "@/lib/engine/country-cycles";
 import { formatPlanDate } from "@/lib/format-date";
 import GuideProvider from "@/components/guide/GuideProvider";
 import GuideLinks from "@/components/guide/GuideLinks";
+import PlanPersistenceNotice, { usePlanWriteDisabled } from "@/components/account/PlanPersistenceNotice";
+import CheckpointPanel from "@/components/checkpoint/CheckpointPanel";
 
 /*
  * /steps is the whole plan as a checklist: grouped by phase, every date derived
@@ -20,8 +22,8 @@ import GuideLinks from "@/components/guide/GuideLinks";
  *
  * Three things this screen refuses to do — hide a confidence value, hide a
  * source, or let a status be carried by colour alone. Every status ships a shape
- * and a word next to its colour, and every blocked row explains what ticking it
- * early actually does.
+ * and a word next to its colour, and every blocked row explains why a tick
+ * cannot bypass its prerequisites.
  *
  * Like /today, the server hands us a derived plan for the first paint and the
  * live store takes over once the screen has mounted.
@@ -223,6 +225,7 @@ export default function StepsScreen({
 
 function StepsBody({ plan }: { plan: Plan }) {
   const { toggleStep } = usePlanActions();
+  const writeDisabled = usePlanWriteDisabled();
   const [filter, setFilter] = useState<Filter>("all");
   const [message, setMessage] = useState("");
   const lastFilter = useRef<Filter>(filter);
@@ -310,7 +313,9 @@ function StepsBody({ plan }: { plan: Plan }) {
     if (!phase) return;
     pendingFocus.current = null;
     const active = document.activeElement;
-    if (active && active !== document.body && active !== document.documentElement) return;
+    // WebKit can move focus to the skip-link target <main> when a focused row
+    // disappears; that is also a lost control, not an intentional next step.
+    if (active && active !== document.body && active !== document.documentElement && active.id !== "main-content") return;
     const target = phaseHeadings.current.get(phase) ?? activeFilter.current;
     if (!target) return;
     const box = target.getBoundingClientRect();
@@ -390,6 +395,7 @@ function StepsBody({ plan }: { plan: Plan }) {
             </span>
           </p>
         </section>
+        <PlanPersistenceNotice />
 
         <section className="steps-filterbar" aria-labelledby="filter-title" data-reveal>
           <h2 className="sr-only" id="filter-title">
@@ -455,6 +461,7 @@ function StepsBody({ plan }: { plan: Plan }) {
                       .map((id) => stepById.get(id))
                       .filter((dependency): dependency is PlanStep => Boolean(dependency));
                     const opens = dependents.get(step.id) ?? [];
+                    const completedDependents = opens.filter((dependent) => dependent.status === "done");
                     return (
                       <li
                         className="steps-row"
@@ -469,14 +476,15 @@ function StepsBody({ plan }: { plan: Plan }) {
                             type="checkbox"
                             id={`step-${step.id}`}
                             checked={isDone}
-                            aria-describedby={`step-meta-${step.id}`}
-                            onChange={() => {
+                            disabled={writeDisabled || (!isDone && waitingOn.length > 0) || (isDone && completedDependents.length > 0)}
+                            aria-describedby={waitingOn.length > 0 ? `step-gate-${step.id}` : completedDependents.length > 0 ? `step-gate-dependents-${step.id}` : undefined}
+                            onChange={async () => {
                               /*
                                * A tick can remove this row from the current filter,
                                * so the phase it belonged to takes the focus back.
                                */
+                              if (!await toggleStep(step.id)) return;
                               pendingFocus.current = group.phase;
-                              toggleStep(step.id);
                               setMessage(isDone ? `Reopened ${step.title}.` : `Marked ${step.title} done.`);
                             }}
                           />
@@ -528,7 +536,7 @@ function StepsBody({ plan }: { plan: Plan }) {
                             <p className="steps-confidence-note">{HARD_DEADLINE_NOTE}</p>
                           ) : null}
                           {waitingOn.length > 0 ? (
-                            <p className="steps-waiting">
+                            <p className="steps-waiting" id={`step-gate-${step.id}`}>
                               <span className="steps-mark" data-status="later" aria-hidden="true" />
                               <span>
                                 <strong className="steps-waiting-key">
@@ -540,13 +548,13 @@ function StepsBody({ plan }: { plan: Plan }) {
                                     {dependency.title}
                                   </span>
                                 ))}
-                                {". "}
-                                {opens.length > 0
-                                  ? `You can still tick it — that marks it settled and opens ${opens.length} ${opens.length === 1 ? "milestone" : "milestones"} that wait on it.`
-                                  : "You can still tick it — that marks it settled even though the work above is not finished."}
+                                {". Finish the prerequisites before marking this milestone done. You can still prepare and record evidence."}
                               </span>
                             </p>
                           ) : null}
+                          {completedDependents.length > 0 ? <p className="steps-waiting" id={`step-gate-dependents-${step.id}`}>
+                            Reopen {completedDependents.map((dependent) => dependent.title).join(", ")} first before reopening this prerequisite.
+                          </p> : null}
                           {waitingOn.length === 0 && opens.length > 0 ? (
                             <p className="steps-waiting">
                               <span className="steps-mark" data-status="next" aria-hidden="true" />
@@ -575,6 +583,12 @@ function StepsBody({ plan }: { plan: Plan }) {
                             ))}
                           </ol>
                         </details>
+                        <div className="steps-checkpoint"><CheckpointPanel step={step}
+                          lockedByDependents={completedDependents.length > 0}
+                          onSkip={() => {
+                            pendingFocus.current = group.phase;
+                            setMessage(`Skipped ${step.title} with a reason. It does not count as done.`);
+                          }} /></div>
                       </li>
                     );
                   })}
@@ -600,9 +614,9 @@ function StepsBody({ plan }: { plan: Plan }) {
           {/* The verified/typical/estimate distinction itself. The mechanics of how
               to find them are already on every row, so they are not restated. */}
           <p className="steps-band-copy">
-            <strong>Verified</strong> means an official source states the rule, figure or date — not
-            that we hold an official link, because every row has one. <strong>Typical</strong> means a
-            reported pattern. <strong>Estimate</strong> means we inferred it.
+            <strong>Verified</strong> means an official source states the rule, figure or date.{" "}
+            <strong>Typical</strong> means a reported pattern. <strong>Estimate</strong> means our own
+            planning assumption.
           </p>
           <nav className="steps-next" aria-label="Where to go next">
             <Link className="steps-underline" href="/today">

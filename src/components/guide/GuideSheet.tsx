@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { useMotionPreferences } from "@/components/providers/MotionProvider";
 import type { PlanStep } from "@/lib/engine/plan";
 import { CONFIDENCE_LABELS } from "@/lib/engine/plan";
@@ -257,61 +257,183 @@ function SectionBody({ content }: { content: SectionContent }) {
   );
 }
 
+function isAvailable(element: HTMLElement): boolean {
+  if (element.matches(":disabled") || element.closest("[hidden]") ||
+      !element.getClientRects().length || getComputedStyle(element).visibility !== "visible") return false;
+  // showModal escapes inherited inertness, but never explicit inertness inside
+  // the dialog. Do not mistake an outside ancestor for a disabled panel.
+  for (let node: HTMLElement | null = element; node; node = node.parentElement) {
+    if (node.inert) return false;
+    if (node.matches("dialog:modal")) break;
+  }
+  // Closed-details descendants can retain layout boxes in some engines. Only
+  // the first summary (and its contents) participates in keyboard navigation.
+  for (let details = element.closest("details:not([open])"); details; details = details.parentElement?.closest("details:not([open])") ?? null) {
+    const summary = Array.from(details.children).find((child) => child.tagName === "SUMMARY");
+    if (!summary?.contains(element)) return false;
+  }
+  return true;
+}
+
+function tabStops(panel: HTMLElement): HTMLElement[] {
+  return Array.from(panel.querySelectorAll<HTMLElement>(
+    'a[href], button, input, select, textarea, summary, [tabindex]',
+  )).filter((element) => element.tabIndex >= 0 && isAvailable(element));
+}
+
+function focusInside(target: HTMLElement, scroll: HTMLElement) {
+  target.focus({ preventScroll: true });
+  if (!scroll.contains(target)) return;
+  const bounds = scroll.getBoundingClientRect();
+  const box = target.getBoundingClientRect();
+  if (box.top < bounds.top) scroll.scrollTop += box.top - bounds.top;
+  else if (box.bottom > bounds.bottom) scroll.scrollTop += box.bottom - bounds.bottom;
+}
+
 export default function GuideSheet({
   open,
   guide,
   loading,
   steps,
   onClose,
+  onSelectSection,
+  returnFocusRef,
 }: {
   open: { milestoneId: string; sectionId: string | null } | null;
   guide: Guide | null;
   loading: boolean;
   steps: PlanStep[];
   onClose: () => void;
+  onSelectSection: (milestoneId: string, sectionId: string) => void;
+  returnFocusRef: RefObject<HTMLElement | null>;
 }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { shouldAnimate } = useMotionPreferences();
+  const isOpen = Boolean(open);
+  const sectionId = open?.sectionId;
 
   const step = open ? steps.find((item) => item.id === open.milestoneId) : undefined;
 
-  // Focus the panel, keep focus inside it, and close on Escape.
+  // The native top layer isolates *all* background content, even though this
+  // provider is nested inside main/animated ancestors. Never inert an ancestor
+  // of the sheet, which would also disable the sheet and its controls.
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
+    const dialog = dialogRef.current;
     const panel = panelRef.current;
-    if (!panel) return;
-    panel.focus();
+    const scroll = scrollRef.current;
+    if (!dialog || !panel || !scroll) return;
+    const opener = returnFocusRef.current;
+    const overflow = [document.documentElement, document.body].flatMap((element) =>
+      ["overflow-x", "overflow-y"].map((property) => {
+        const value = element.style.getPropertyValue(property);
+        const priority = element.style.getPropertyPriority(property);
+        element.style.setProperty(property, "hidden", "important");
+        return { element, property, value, priority };
+      }),
+    );
+    // Restore explicitly with preventScroll, not the UA's potentially stale
+    // previously-focused element (notably pointer activation in Safari).
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    dialog.showModal();
+    panel.focus({ preventScroll: true });
+    let lastFocus: HTMLElement = panel;
+
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key !== "Tab" || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      const stops = tabStops(panel);
+      const index = stops.findIndex((element) => element === document.activeElement);
+      const active = document.activeElement;
+      // Section headings are intentionally focusable only programmatically.
+      // Continue from their DOM position rather than restarting at the header.
+      if (index === -1 && active && active !== panel && panel.contains(active)) {
+        const direction = event.shiftKey ? Node.DOCUMENT_POSITION_PRECEDING : Node.DOCUMENT_POSITION_FOLLOWING;
+        const adjacent = stops.filter((element) => (active.compareDocumentPosition(element) & direction) !== 0);
+        const target = event.shiftKey ? adjacent.at(-1) : adjacent[0];
         event.preventDefault();
-        onClose();
+        focusInside(target ?? (event.shiftKey ? stops.at(-1) : stops[0]) ?? panel, scroll);
         return;
       }
-      if (event.key !== "Tab") return;
-      const focusable = panel.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
+      // Own the entire Tab sequence, not just its endpoints. Engines differ
+      // in which links native Tab visits; none may escape a modal to chrome.
+      event.preventDefault();
+      const next = index === -1 ? (event.shiftKey ? stops.at(-1) : stops[0])
+        : stops[(index + (event.shiftKey ? -1 : 1) + stops.length) % stops.length];
+      focusInside(next ?? panel, scroll);
+    };
+    const onFocus = (event: FocusEvent) => {
+      if (event.target instanceof HTMLElement && panel.contains(event.target)) {
+        lastFocus = event.target;
+      } else {
+        // Covers programmatic focus, the initial container, and controls removed
+        // while loading or collapsing a disclosure. Native inert blocks most
+        // outside attempts before they reach this defensive guard.
+        focusInside(panel.contains(lastFocus) && isAvailable(lastFocus) ? lastFocus : panel, scroll);
       }
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+    document.addEventListener("keydown", onKey, true);
+    document.addEventListener("focusin", onFocus, true);
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("focusin", onFocus, true);
+      if (dialog.open) dialog.close();
+      overflow.forEach(({ element, property, value, priority }) => {
+        if (value) element.style.setProperty(property, value, priority);
+        else element.style.removeProperty(property);
+      });
+      const active = document.activeElement;
+      // Navigation/unmount must not steal meaningful focus on a new page or
+      // attempt to focus a removed, disabled, hidden or already-inert opener.
+      if (opener?.isConnected && isAvailable(opener) &&
+          (!active || active === document.body || active === document.documentElement || dialog.contains(active))) {
+        opener.focus({ preventScroll: true });
+      }
+    };
+  }, [isOpen, returnFocusRef]);
+
+  // Wait for the validated response and committed layout. Only this scroll
+  // region moves; scrollIntoView could also move main/Lenis ancestors. Offset
+  // geometry ignores the sheet/section entrance transforms. Immediate jumps
+  // work identically with reduced motion and never leave a smooth-scroll job.
+  useEffect(() => {
+    if (!open) return;
+    const scroll = scrollRef.current;
+    const panel = panelRef.current;
+    if (!scroll || !panel) return;
+    if (loading || !guide || !open.sectionId) {
+      if (guide && !open.sectionId) panel.focus({ preventScroll: true });
+      scroll.scrollTop = 0;
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      const section = Array.from(scroll.querySelectorAll<HTMLElement>("[data-guide-section]"))
+        .find((element) => element.dataset.guideSection === open.sectionId);
+      if (!section) {
+        panel.focus({ preventScroll: true });
+        scroll.scrollTop = 0;
+        return;
+      }
+      section.querySelector<HTMLElement>("h3")?.focus({ preventScroll: true });
+      scroll.scrollTop = Math.max(0, section.offsetTop - 16);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, guide, loading]);
 
   if (!open) return null;
 
   const active = guide?.sections.find((section) => section.id === open.sectionId);
 
   return (
-    <div className="guide-overlay" data-guide-motion={shouldAnimate ? "on" : "off"}>
+    <dialog
+      className="guide-overlay"
+      ref={dialogRef}
+      aria-modal="true"
+      aria-label={step ? `Guide: ${step.title}` : "Guide"}
+      data-guide-motion={shouldAnimate ? "on" : "off"}
+      onCancel={(event) => { event.preventDefault(); onClose(); }}
+    >
       <div
         className="guide-scrim"
         role="presentation"
@@ -320,9 +442,6 @@ export default function GuideSheet({
       />
       <div
         className="guide-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label={step ? `Guide: ${step.title}` : "Guide"}
         tabIndex={-1}
         ref={panelRef}
         data-guide-panel
@@ -351,19 +470,36 @@ export default function GuideSheet({
           </button>
         </header>
 
-        <div className="guide-body-scroll" data-guide-scroll>
-          {loading ? <p className="guide-loading">Opening the guide…</p> : null}
+        <div className="guide-body-scroll" data-guide-scroll data-lenis-prevent ref={scrollRef} aria-busy={loading}>
+          {loading ? <p className="guide-loading" role="status">Opening the guide…</p> : null}
 
           {!loading && !guide ? (
-            <p className="guide-loading">
-              There is no written guide for this milestone yet. The plan, the date and the source
-              are still here.
+            <p className="guide-loading" role="alert">
+              This guide could not be loaded. Close it and try again. The plan and
+              its source remain available; no unpublished guide is shown.
             </p>
           ) : null}
 
           {guide ? (
             <>
               <p className="guide-intro">{guide.intro}</p>
+
+              {sectionId && !active ? (
+                <p className="guide-loading" role="status">That section is not available in this guide. The published sections are shown below.</p>
+              ) : null}
+              <nav className="guide-links guide-section-links" aria-label="Sections in this guide">
+                {guide.sections.map((section) => (
+                  <button
+                    className="guide-link"
+                    key={section.id}
+                    type="button"
+                    aria-current={active?.id === section.id ? "location" : undefined}
+                    onClick={() => onSelectSection(open.milestoneId, section.id)}
+                  >
+                    {section.navLabel}
+                  </button>
+                ))}
+              </nav>
 
               {step?.tasks.length ? (
                 <section className="guide-section" data-guide-section="tasks">
@@ -386,7 +522,7 @@ export default function GuideSheet({
                   data-guide-active={active?.id === section.id ? "true" : undefined}
                 >
                   <p className="guide-eyebrow">{section.eyebrow}</p>
-                  <h3 className="guide-section-title">{section.title}</h3>
+                  <h3 className="guide-section-title" tabIndex={-1}>{section.title}</h3>
                   <SectionBody content={section.content} />
                 </section>
               ))}
@@ -394,6 +530,6 @@ export default function GuideSheet({
           ) : null}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
