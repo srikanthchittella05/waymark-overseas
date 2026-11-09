@@ -276,6 +276,102 @@
   align-self: start;
 }
 
+/* The country is the choice. Its places sit after the choices, outside the
+   radio labels, in the full width of the question column on every screen. */
+.pa-gallery {
+  min-width: 0;
+  padding: clamp(0.95rem, 2vw, 1.4rem);
+  border-radius: 0.9rem;
+  background: var(--color-sky-wash);
+}
+.pa-gallery-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.9rem;
+}
+.pa-gallery-intro .eyebrow {
+  color: var(--color-sky-ink);
+}
+.pa-gallery-intro h3 {
+  margin-top: 0.35rem;
+  font-size: clamp(1.25rem, 2.5vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+.pa-gallery-intro > p {
+  max-width: 27ch;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-sky-ink);
+}
+.pa-gallery-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border-radius: 0.55rem;
+  background: var(--color-parchment);
+}
+.pa-gallery-frame img {
+  object-fit: cover;
+}
+.pa-gallery-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.2rem 0.9rem;
+  margin-top: 0.7rem;
+}
+.pa-gallery-place {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.3;
+  color: var(--color-forest);
+}
+.pa-gallery-credit {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-sky-ink);
+}
+.pa-gallery-credit a { text-underline-offset: 0.18em; }
+.pa-gallery-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+.pa-gallery-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 5.5rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--color-sky-ink);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-forest);
+  cursor: pointer;
+}
+.pa-gallery-controls button:is(:hover, :focus-visible) {
+  background: var(--color-forest);
+  color: var(--color-porcelain);
+}
+.pa-gallery-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--color-sky-ink);
+}
+
 /* ------------------------------ intake --------------------------------- */
 
 .pa-select-label {
@@ -1008,6 +1104,10 @@
   .pa-table td {
     font-size: 0.6875rem;
     padding-right: 0.35rem;
+  }
+  /* Long Singapore intake names must wrap rather than widen the page. */
+  .pa-table tbody th {
+    white-space: normal;
   }
   .pa-delta-list li {
     grid-template-columns: minmax(0, 1fr);

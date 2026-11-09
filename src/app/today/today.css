@@ -520,7 +520,7 @@
   flex-direction: column;
   gap: 0.45rem;
   padding: clamp(1rem, 1.8vw, 1.4rem) clamp(0.85rem, 1.5vw, 1.2rem);
-  background: var(--paper);
+  background: var(--color-signal-wash);
 }
 .today-risk-phase {
   font-size: 0.6875rem;
@@ -647,6 +647,7 @@
   font-weight: 500;
   color: var(--color-porcelain);
 }
+.today-honest strong:first-child { color: var(--color-sky-on-forest); }
 
 .today-next {
   display: flex;
