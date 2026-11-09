@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               name: "Waymark",
               description:
                 "Turn I want to study abroad into a dated plan. Pick a destination and intake, and every deadline is counted back from departure.",
-              url: "https://waymark.example",
+              url: process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://waymark.example",
             }),
           }}
         />
