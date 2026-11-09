@@ -24,6 +24,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <script id="waymark-arrival" dangerouslySetInnerHTML={{ __html: ARRIVAL_BOOTSTRAP }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Waymark",
+              description:
+                "Turn I want to study abroad into a dated plan. Pick a destination and intake, and every deadline is counted back from departure.",
+              url: "https://waymark.example",
+            }),
+          }}
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <MotionProvider>
